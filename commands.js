@@ -531,7 +531,7 @@ commands["savedata"] =
     {
         if (!this.isFromTrusted()) return;
 
-        this.saveCommandData();
+        this.saveData();
         this.reply("Data saved..");
     }
 }
