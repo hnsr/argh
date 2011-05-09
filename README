@@ -1,0 +1,127 @@
+This is an IRC bot written in javascript that runs on node.js, here are some notes on getting it
+running and how it can be extended:
+
+  Configuration is stored in JSON format under ~/.argh/config.js. The various bits of data used by
+  commands and internal stuff is stored under ~/.argh/data/*.js (each JS file containing a JSON
+  encoded object for each type of data (ie. one file for .seen records, another for .leavemsg).
+
+  The directory structure is created automatically if it doesnt exist, though the config.js file
+  should exist before argh can run. Example config.js:
+
+    {
+      "host": "irc.example.com",
+      "port": 6667,
+      "command_prefix": ".",
+      "nicks":    [ "arghh", "arghhh", "arghhhh" ],
+      "channels": [ "#foo", "#bar" ],
+      "trusted_hosts": [
+          "myhostname.example.com",
+          "myreggednick.users.quakenet.org"
+      ],
+      "burstCount":  2,
+      "burstPeriod": 3000
+    }
+
+  (trusted_hosts is an array with hostnames that are allowed to run 'trusted' commands. the
+  burstCount/burstPeriod are for throttling messages, in this case at most 2 messages per 3 seconds
+  are allowed)
+
+  An evil irc server/oper could trick argh into doing evil stuff if it changes its hostname into one
+  of the trusted hosts since it could then run trusted commands (like maybe .addcommand if/once I
+  add that, which would run at the same privelege level as the user argh runs at). Therefore leave
+  trusted_hosts empty or properly isolate/jail argh
+
+
+Adding commands:
+
+  Commands are defined in commands.js, in an object with command names used as index/property, see
+  the source for some example commands. A command consists of a single function called when the
+  command is invoked and hook functions for hooking into IRC events (for example a message arriving
+  on a channel or a user quitting) for data-gathering purposes. Commands are a bit of a misnomer,
+  should probably have called them 'modules' or something, the youtube command for example isn't
+  really a command but just hooks into the channelMessage event to look for youtube links, so it can
+  fetch the title and print it back to the channel.
+
+  the hook and command functions are called with a CommandContext instance used as context object
+  (the 'this' value) to provide some convenient functions like 'this.reply("foo")' to reply to the
+  user that invoked the command. see argh.js on what is available. Hook functions can't use the
+  reply() function though since they don't have an origin (= where a command invocation came from)
+  property. But you can send messages from hooks directly through the this.client object.
+
+  in the future i'd like to make it possible to have user-defined commands stored somewhere under
+  ~/.argh/ that can be reloaded on the fly, and maybe even adding simple commands over IRC (for
+  trusted users of course, command functions are run in the same vm context as the main argh code)
+
+  there is a simple and dumb infrastructure for storing arbitraty data; CommandContext.getData("foo")
+  returns a handle to an object, and when exiting (or when saveData()/.savaData is called) this object
+  is dumped (as JSON) into ~/.argh/data/foo.js. the parameter to getData can only contain
+  alphabetical characters or digits (this is checked before data is dumped to file). getData should
+  always return an object, if no data object was loaded by that name on start up, it creates a new
+  one.
+
+
+Most of the core IRC functionality is placed in the irc.js module, here is some quick and dirty (and
+soon to be out of date) irc.Client documentation:
+
+  irc.Client events:
+
+    input(msg)
+      emitted when a raw protocol message is received from the IRC server
+
+    output(msg)
+      emitted when a raw protocol message is sent to the IRC server
+
+    connect()
+      emitted when a connection has been established to the IRC server (before registering)
+
+    register(nickname)
+      emitted when registered with the server. nickname is the nick that we registered with.
+
+    channelMessage(channel, sender, message)
+      emitted when a message is received on a channel, sender is an object with 'name' (nickname),
+      'user', and 'host' properties.
+
+    privateMessage(sender, message)
+      emitted when a private message is received, see channelMessage.
+
+    userUpdate(name, type, newName, channel, message)
+      emitted when a user joins, leaves or gets kicked from a channel, quits, or changes nickname.
+
+    disconnect(error, message)
+      emitted when disconnected. error and message are null unless the disconnection happened due to
+      an error condition (i.e. was not requested by client itself).
+
+
+  irc.Client methods:
+
+    client = new irc.Client(options)
+      instantiates new client object, options is an object that must have a property 'nicks'
+      refering to an array with at least one string to be used as nickname.
+
+    client.connect(host, port)
+      connect to IRC server at host:port. when this succeeds, the connect event will be emitted.
+      does not return a value, if an error occurs during connecting the disconnect event will be
+      fired immediately with the appropriate error message/code.
+
+    client.joinChannel(name, key)
+    client.leaveChannel(channel, message)
+    client.sendToChannel(channel, message)
+    client.sendToNickname(name, message)
+      ^ should all be obvious, for joinChannel, key is optional. should only be called after the
+      register event is emitted
+
+    client.disconnect(message)
+      asynchroneously disconnect, using message as quit message. when disconnection is completed
+      the 'disconnect' event will be emitted.
+
+    client.lowerCase(string)
+      lowercase a string using IRC rules (takes into account server CASEMAPPING setting), should
+      probably only be used for nicknames and channel names.
+
+    client.compareName(string)
+      compares two names case-independently (also takes into account IRC rules for low/high case
+      mapping)
+
+    client.isChannelName(string)
+      returns true if string is a valid channel name, else false
+
