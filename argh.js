@@ -3,6 +3,7 @@
 var vm       = require("vm");
 var fs       = require("fs");
 var util     = require("util");
+var repl     = require("repl");
 var commands = require("./commands");
 var codes    = require("./irccodes");
 var irc      = require("./irc");
@@ -54,6 +55,34 @@ client.on("error",          onError);
 client.on("disconnect",     onDisconnect);
 
 client.connect(conf.host, conf.port);
+
+// Setup a command prompt that can be used to give commands, and in emergencies can also eval code
+// in this file's local scope to fix things on the fly:
+var prompt = repl.start("> ");
+
+log(""); // Prevent first log message ending up behind prompt
+
+prompt.context.run = function (cmd)
+{
+    var pcmd;
+
+    if (pcmd = parseCommand(cmd))
+    {
+        var origin = { fromConsole: true };
+        runCommand(pcmd, origin);
+    }
+}
+prompt.context.eval = function (code)
+{
+    try
+    {
+        eval(code);
+    }
+    catch (e)
+    {
+        log(e.message);
+    }
+}
 
 
 // Misc functions //////////////////////////////////////////////////////////////////////////////////
@@ -525,7 +554,7 @@ function reply(message)
     else if (this.origin.name)
         client.sendToNickname(this.origin.name, message);
     else
-        log("reply: couldn't determine source");
+        log("reply: "+message);
 }
 CommandContext.prototype.reply = reply;
 
@@ -536,7 +565,7 @@ function replyPrivately(message)
     if (this.origin.name)
         client.sendToNickname(this.origin.name, message);
     else
-        log("replyPrivately: couldn't determine source");
+        log("replyPrivately: "+message);
 }
 CommandContext.prototype.replyPrivately = replyPrivately;
 
@@ -546,6 +575,8 @@ function isFromTrusted()
 {
     var match = false;
     var fromHost = this.origin.host;
+
+    if (this.origin.fromConsole) return true;
 
     if (fromHost)
     {
