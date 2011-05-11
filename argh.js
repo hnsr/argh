@@ -523,7 +523,7 @@ CommandContext.prototype.data     = data;
 
 // Add given piglevel to sender of message to punish for incorrect usage. If amount2 is given as
 // well, a random number between amount and amount2 will be picked.
-function punish(reason, amount, amount2)
+CommandContext.prototype.punish = function (reason, amount, amount2)
 {
     if (this.origin.name)
     {
@@ -543,11 +543,10 @@ function punish(reason, amount, amount2)
             this.reply(reason + ", level of pig decreased by " + Math.abs(amount));
     }
 }
-CommandContext.prototype.punish = punish;
 
 
 // Sends message to either channel or nickname depending on origin
-function reply(message)
+CommandContext.prototype.reply = function (message)
 {
     if (this.origin.channel)
         client.sendToChannel(this.origin.channel, message);
@@ -556,22 +555,20 @@ function reply(message)
     else
         log("reply: "+message);
 }
-CommandContext.prototype.reply = reply;
 
 
 // Sends message to sender privately even it it originated on a channel
-function replyPrivately(message)
+CommandContext.prototype.replyPrivately = function (message)
 {
     if (this.origin.name)
         client.sendToNickname(this.origin.name, message);
     else
         log("replyPrivately: "+message);
 }
-CommandContext.prototype.replyPrivately = replyPrivately;
 
 
 // Returns true of origin is trusted
-function isFromTrusted()
+CommandContext.prototype.isFromTrusted = function ()
 {
     var match = false;
     var fromHost = this.origin.host;
@@ -587,7 +584,6 @@ function isFromTrusted()
 
     return match;
 }
-CommandContext.prototype.isFromTrusted = isFromTrusted;
 
 
 
