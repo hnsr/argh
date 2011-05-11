@@ -25,13 +25,14 @@ function Client(options)
     // XXX: This doesn't seem needed, remove after trying a few more servers.
     this.registerDelay = options.registerDelay || 0; // Delay before we attempt to register
 
-    this.encoding    = options.encoding    || "utf8";
-    this.username    = options.username    || "unknown";
-    this.realname    = options.realname    || "unknown";
-    this.password    = options.password    || null;
-    this.burstCount  = options.burstCount  || 3;
-    this.burstPeriod = options.burstPeriod || 3000;
-    this.nicks       = options.nicks; // TODO: throw exception if not given?
+    this.encoding     = options.encoding     || "utf8";
+    this.username     = options.username     || "unknown";
+    this.realname     = options.realname     || "unknown";
+    this.password     = options.password     || null;
+    this.burstCount   = options.burstCount   || 3;
+    this.burstPeriod  = options.burstPeriod  || 3000;
+    this.pingInterval = options.pingInterval || 120000;
+    this.nicks        = options.nicks; // TODO: throw exception if not given?
 
     this._init();
 }
@@ -60,6 +61,13 @@ Client.prototype._init = function ()
 
     // Set when a disconnect timeout timer is running (see disconnect())
     this._disconnectTimer = null;
+
+    // Used to send a PING after some time of inactivity, gets cleared/reassigned when a message is
+    // received.
+    if (this._pingTimer)
+        clearTimeout(this._pingTimer);
+
+    this._pingTimer = null;
 
     // This is an object with arrays of names, indexed by channel name. This is used to gather up
     // the names received from RPL_NAMREPLY after joining a channel (or after requesting them)
@@ -287,6 +295,18 @@ Client.prototype.connect = function (host, port)
 
         for (var i = 0; i < lines.length-1; i++)
         {
+            // Send a PING after pingInterval ms has passed since last message. This helps with
+            // detecting broken connections. Eventually I think I might want to actually check for a
+            // PONG, in case the other end has dissappeared for too long (and we dont get a RST)
+            if (self._pingTimer) clearTimeout(self._pingTimer);
+
+            self._pingTimer = setTimeout(function ()
+            {
+                self._pingTimer = null;
+                self.send("PING", self._nickname);
+
+            }, self.pingInterval);
+
             self.emit("input", lines[i]);
             self._dispatchMessage(lines[i]);
         }
