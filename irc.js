@@ -277,21 +277,21 @@ Client.prototype.connect = function (host, port)
 
     sock.on("data", function (data)
     {
-        var lines = data.split(/\r\n/);
         var msg;
 
         // When large amounts of data is being received, it can sometimes be split over multiple
         // data events, potentially splitting lines in the middle. I can detect this eventuality by
         // looking for a non-empty final element in 'lines' (since I am splitting on line
-        // terminators). I'll save the non-terminated line so that it can be prepended to the first
-        // line on the next data event.
+        // terminators). I'll save the partial message (leftover) so that it can be prepended to the
+        // next data chunk
 
-        // Get partial unterminated lines from last data event and prepend them to the first line
-        if (leftover && lines.length > 0)
+        if (leftover && data.length > 0)
         {
-            lines[0] = leftover + lines[0];
+            data = leftover + data;
             leftover = null;
         }
+
+        var lines = data.split(/\r\n/);
 
         for (var i = 0; i < lines.length-1; i++)
         {
@@ -314,7 +314,7 @@ Client.prototype.connect = function (host, port)
         // Ensure we store unterminated lines for later.
         if (lines[lines.length-1] !== "")
         {
-            // Just append if leftover already set, should be correct?
+            // Just append if leftover already set
             leftover = leftover || "";
             leftover += lines[lines.length-1];
         }
