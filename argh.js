@@ -22,6 +22,8 @@ var commandData;   // Object with data objects for each command
 var commandHooks;  // Object with for each 'event' an array of objects specifying a handler function
                    // and a context to invoke that handler function with, for each command hooking
                    // into that event.
+var startTime = Date.now();   // Time when we started
+var connectTime = null; // Time since last connect
 
 // Some magic to have everything that is logged prefixed with '**', and make 'log' an alias for it.
 var oldlog = console.log;
@@ -332,6 +334,8 @@ function onConnect()
 {
     log("Connected to server");
 
+    connectTime = Date.now();
+
     // Now that we're connected, make sure we reset retryCount if the connection lasts for longer
     // than say.. a minute
     retryResetTimer = setTimeout(function ()
@@ -511,14 +515,16 @@ function CommandContext(command, origin, name, rawArgs)
 // Other things that are not directly related to command input, but should be reachable
 // XXX: Consider putting these in the constructor? makes more sense, even if it means I have a bunch
 // more assignments every time a command is invoked.
-CommandContext.prototype.log      = log;
-CommandContext.prototype.getTop   = getTop;
-CommandContext.prototype.getData  = getData;
-CommandContext.prototype.saveData = saveData;
-CommandContext.prototype.client   = client;
-CommandContext.prototype.conf     = conf;
-CommandContext.prototype.commands = commands;
-CommandContext.prototype.data     = data;
+CommandContext.prototype.version     = version;
+CommandContext.prototype.log         = log;
+CommandContext.prototype.log         = log;
+CommandContext.prototype.getTop      = getTop;
+CommandContext.prototype.getData     = getData;
+CommandContext.prototype.saveData    = saveData;
+CommandContext.prototype.client      = client;
+CommandContext.prototype.conf        = conf;
+CommandContext.prototype.commands    = commands;
+CommandContext.prototype.data        = data;
 
 
 // Add given piglevel to sender of message to punish for incorrect usage. If amount2 is given as
@@ -585,5 +591,11 @@ CommandContext.prototype.isFromTrusted = function ()
     return match;
 }
 
+// Return object with timestamps for when we started up, and when we most recently connected.
+// XXX: There must be a nicer way to expose these to commands..
+CommandContext.prototype.getTimes = function ()
+{
+    return { connectTime: connectTime, startTime: startTime };
+}
 
 

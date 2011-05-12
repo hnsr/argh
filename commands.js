@@ -8,18 +8,20 @@ var commands = module.exports = {};
 
 // Return friendly time string representing time passed since given timeMS, "2 days ago",
 // "5 hours ago", "60 seconds ago" etc
-function getFriendlyTime(timeMS)
+function getFriendlyTime(timeMS, postfix)
 {
+    if (!postfix && postfix != "") postfix = " ago";
+
     // Calculate distance between time and Date.now() in seconds, then turn it into
     // something more friendly.
     var d = (Date.now()-timeMS)/1000;
     var week = 604800, day = 86400, hour = 3600;
 
-    if (d > (week*2)) return Math.round(d/week)+" weeks ago";
-    if (d > ( day*2)) return Math.round(d/day) +" days ago";
-    if (d > (hour*2)) return Math.round(d/hour)+" hours ago";
-    if (d > (  60*2)) return Math.round(d/60)  +" minutes ago";
-    return Math.round(d)+" seconds ago";
+    if (d > (week*2)) return Math.round(d/week)+" weeks"   + postfix;
+    if (d > ( day*2)) return Math.round(d/day) +" days"    + postfix;
+    if (d > (hour*2)) return Math.round(d/hour)+" hours"   + postfix;
+    if (d > (  60*2)) return Math.round(d/60)  +" minutes" + postfix;
+    return Math.round(d)+" seconds" + postfix;
 }
 
 commands["wipemsg"] =
@@ -579,6 +581,47 @@ commands["pick"] =
         }
     }
 }
+
+commands["rot13"] =
+{
+    description: "encrypt text using the highly secure rot13 algorithm!",
+    handler: function ()
+    {
+        if (!this.rawArgs) return;
+
+        // Rotate a single a-z/A-Z character by offset
+        function rot(char, offset)
+        {
+            var code = char.charCodeAt(0);
+
+            if (code > 64 && code < 91)
+                return String.fromCharCode( (((code-65)+offset)%26)+65 );
+            else if (code > 96 && code < 123)
+                return String.fromCharCode( (((code-97)+offset)%26)+97 );
+            else
+                return "";
+        }
+
+        this.reply("rot13: "+this.rawArgs.replace(/[a-zA-Z]/g, function (m) { return rot(m, 13) }));
+    }
+};
+
+commands["info"] =
+{
+    description: "display some miscellaneous info",
+    handler: function ()
+    {
+        this.reply(
+            "Argh version "+this.version+", "+
+            "uptime: "+getFriendlyTime(this.getTimes().startTime, "")+", "+
+            "connect time: "+getFriendlyTime(this.getTimes().connectTime, "")+", "+
+            "platform: "+process.platform+", "+
+            "node version: "+process.version+", "+
+            "sources: http://aphax.nl/cgit/argh"
+        );
+
+    }
+};
 
 commands["quit"] =
 {
