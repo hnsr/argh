@@ -582,30 +582,6 @@ commands["pick"] =
     }
 }
 
-commands["rot13"] =
-{
-    description: "encrypt text using the highly secure rot13 algorithm!",
-    handler: function ()
-    {
-        if (!this.rawArgs) return;
-
-        // Rotate a single a-z/A-Z character by offset
-        function rot(char, offset)
-        {
-            var code = char.charCodeAt(0);
-
-            if (code > 64 && code < 91)
-                return String.fromCharCode( (((code-65)+offset)%26)+65 );
-            else if (code > 96 && code < 123)
-                return String.fromCharCode( (((code-97)+offset)%26)+97 );
-            else
-                return "";
-        }
-
-        this.reply("rot13: "+this.rawArgs.replace(/[a-zA-Z]/g, function (m) { return rot(m, 13) }));
-    }
-};
-
 commands["info"] =
 {
     description: "display some miscellaneous info",
@@ -631,6 +607,128 @@ commands["quit"] =
         if (!this.isFromTrusted()) return;
 
         this.client.disconnect(this.rawArgs);
+    }
+};
+
+// FIXME: Rewrite this to use Buffer, that way i can support utf8 instead of restricting to ascii
+commands["ascii"] =
+{
+    description: "turn binary/hexadecimal ascii-encoded string into normal text",
+    params: "<hex/bin> <string> or just <string> (tries to guess if its binary or hexadecimals)",
+    handler: function (a, b)
+    {
+        // FIXME: Might want to filter out non-printable characters, shouldn't strictly be needed
+        // as \r\n is already filtered out by irc.Client, but ngircd seemed to not like certain
+        // non-printable char sequences?
+        var type;
+        var strOut = "";
+
+        if (arguments.length == 2 && a == "hex")
+            type = a;
+        else if (arguments.length == 2 && a == "bin")
+            type = a;
+        else if (arguments.length == 1 && a.trim().match(/^[10]+$/))
+        {
+            type = "bin";
+            b = a;
+        }
+        else if (arguments.length == 1 && a.trim().match(/^[0-9a-f]+$/i))
+        {
+            type = "hex";
+            b = a;
+        }
+        else
+            return;
+
+        var str = b.trim();
+        var byte;
+        var width = type == "hex" ?  2 : 8;
+        var radix = type == "hex" ? 16 : 2;
+
+        // Pull out 'width' chars and parse
+        for (var i = 0; i < (str.length/width); i++)
+        {
+            byte = parseInt(str.slice(i*width, (i+1)*width), radix);
+
+            if (byte < 128)
+                strOut += String.fromCharCode(byte);
+            else
+                strOut += "?";
+        }
+        this.reply("ascii: "+strOut);
+    }
+};
+
+commands["bin"] =
+{
+    description: "turn ascii text into binary",
+    params: "<string>",
+    handler: function ()
+    {
+        if (!this.rawArgs) return;
+
+        var str = this.rawArgs;
+        var strOut = "";
+
+        for (var i in str)
+        {
+            var c = str.charCodeAt(i);
+
+            if (c < 128)
+                strOut += (c+256).toString(2).slice(1);
+            else
+                strOut += (63+256).toString(2).slice(1); // insert '?' for non-ascii charcodes
+        }
+        this.reply("bin: "+strOut);
+    }
+};
+
+commands["hex"] =
+{
+    description: "turn ascii text into hexadecimals",
+    params: "<string>",
+    handler: function ()
+    {
+        if (!this.rawArgs) return;
+
+        var str = this.rawArgs;
+        var strOut = "";
+
+        for (var i in str)
+        {
+            var c = str.charCodeAt(i);
+
+            if (c < 128)
+                strOut += (c+256).toString(16).slice(1);
+            else
+                strOut += (63+256).toString(16).slice(1); // insert '?' for non-ascii charcodes
+        }
+        this.reply("hex: "+strOut);
+    }
+};
+
+commands["rot13"] =
+{
+    description: "encrypt text using the highly secure rot13 algorithm!",
+    params: "<string>",
+    handler: function ()
+    {
+        if (!this.rawArgs) return;
+
+        // Rotate a single a-z/A-Z character by offset
+        function rot(char, offset)
+        {
+            var code = char.charCodeAt(0);
+
+            if (code > 64 && code < 91)
+                return String.fromCharCode( (((code-65)+offset)%26)+65 );
+            else if (code > 96 && code < 123)
+                return String.fromCharCode( (((code-97)+offset)%26)+97 );
+            else
+                return "";
+        }
+
+        this.reply("rot13: "+this.rawArgs.replace(/[a-zA-Z]/g, function (m) { return rot(m, 13) }));
     }
 };
 
