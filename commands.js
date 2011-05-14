@@ -51,13 +51,28 @@ commands["wipemsg"] =
 commands["leavemsg"] =
 {
     params: "<nickname> <message>",
-    description: "leave a message for user. WARNING: don't use for private/critical stuff, its not very secure",
+    description: "leave a message for user. WARNING: don't use for private/critical stuff, its"+
+                 " not very secure",
+
+    // Reports any recorded messages for nickname, to nickname. Since this is called on various
+    // events like joining channe, there is a risk of spamming nickname when he is on multiple
+    // channels that I am on as well.. so I record a timestamp for when I last reported to nickname,
+    // and make sure I don't spam nickname again within some period. I'll store these timestamps in
+    // a temporary object, doesnt need to be stored persistently.
     sendMessages: function (nickname, data)
     {
         var messages = data && data[this.client.lowerCase(nickname)];
 
+        // Make sure we don't spam messages more than once ever 60 seconds
+        var lastTime = this.command.spamTimestamps[nickname];
+
+        if (lastTime && (Date.now()-lastTime) < 60000)
+            return;
+
         if (messages)
         {
+            this.command.spamTimestamps[nickname] = Date.now();
+
             if (messages.length == 1)
             {
                 var msg = messages[0];
@@ -80,6 +95,8 @@ commands["leavemsg"] =
                 "wipemsg' command to delete these messages");
         }
     },
+    // Temporary storage for timestamps of when when we last spammed a user his/her messages
+    spamTimestamps: {},
     hooks:
     {
         userUpdate: function (nickname, type, newname, channel, message)
