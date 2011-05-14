@@ -18,10 +18,12 @@ var retryCount = 0;
 var retryTimer;      // !null if a reconnect is scheduled
 var retryResetTimer; // !null if we've connected and haven't reset retryCount yet
 var client;
-var commandData;   // Object with data objects for each command
+var data; // Object with persistent data objects
+
 var commandHooks;  // Object with for each 'event' an array of objects specifying a handler function
                    // and a context to invoke that handler function with, for each command hooking
                    // into that event.
+
 var startTime = Date.now();   // Time when we started
 var connectTime = null; // Time since last connect
 
