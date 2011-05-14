@@ -91,12 +91,39 @@ soon to be out of date) irc.Client documentation:
       emitted when disconnected. error and message are null unless the disconnection happened due to
       an error condition (i.e. was not requested by client itself).
 
+  irc.Client properties:
+
+    client.nickname:
+      the nickname that we ended up with, should only be read, not set
 
   irc.Client methods:
 
     client = new irc.Client(options)
       instantiates new client object, options is an object that must have a property 'nicks'
-      refering to an array with at least one string to be used as nickname.
+      refering to an array with at least one string to be used as nickname. Optios object cna have
+      the following properties, of which the 'nicks' property is the only one required:
+
+        options.timeout:
+          How long to wait for certain commands (QUIT) to complete before taking forced action
+
+        options.encoding:
+          Encoding to use for the connection, only 'ascii' and 'utf8' are supported for now
+
+        options.username
+        options.realname
+        options.password
+
+        options.burstCount:
+        options.burstPeriod:
+          How many messages can be sent at most within some time period (in ms)
+
+        options.pingInterval:
+          Time of inactivity after which a PING is sent, to make sure connecten is taken down if it
+          has died for some reason
+
+        options.nicks:
+          Array of nicknames to try to register with
+
 
     client.connect(host, port)
       connect to IRC server at host:port. when this succeeds, the connect event will be emitted.
