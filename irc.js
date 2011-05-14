@@ -428,15 +428,13 @@ Client.prototype.sendToChannel = function (channel, message)
         this.send("PRIVMSG", channel, message);
     else
         warning("sendToChannel: invalid channel name or message");
-        // XXX: send error event instead?
 }
 
 
 Client.prototype.sendToNickname = function (nick, message)
 {
-    // Check for valid nickname
-    //if (this.isNickname(channel) && message) FIXME
-    if (true && message)
+    // TODO: Check for valid nickname
+    if (message)
         this.send("PRIVMSG", nick, message);
     else
         warning("sendToNickname: invalid name or message");

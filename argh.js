@@ -184,7 +184,6 @@ function loadConfig()
     var confPath = confPrefix+"/config.js";
     var loaded;
 
-    // FIXME: use try/catch?
     if ( !(loaded = loadJSON(confPath)) )
     {
         error("failed to load configuration");
@@ -398,7 +397,6 @@ function onDisconnect(error, message)
         log("Disconnected due to error: " + message);
         log("Will try to reconnect in "+timeWait+" seconds");
 
-        // TODO: Attempt to reconnect after an optional timeout depending on connectionRetryCount.
         retryTimer = setTimeout(function ()
         {
             retryTimer = null;

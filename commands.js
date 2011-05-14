@@ -47,7 +47,6 @@ commands["wipemsg"] =
 // message recipient by hostname, which is annoying.. I could keep records of nicknames I've
 // encountered along with hostnames and do something with that data, but also tricky and not
 // foolproof..
-// FIXME: I could check if <nickname> is really a hostname so it will at least be an option?
 commands["leavemsg"] =
 {
     params: "<nickname> <message>",
@@ -538,7 +537,7 @@ commands["eval"] =
         }
         catch (err)
         {
-            this.reply("eval: "+err); // FIXME: is this safe?
+            this.reply("eval: "+err);
         }
     }
 };
