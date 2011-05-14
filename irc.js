@@ -57,7 +57,7 @@ Client.prototype._init = function ()
     this._nicks_tried  = 0;
 
     // Nickname we ended up registering with (or have changed to)
-    this._nickname = null;
+    this.nickname = null;
 
     // Set when a disconnect timeout timer is running (see disconnect())
     this._disconnectTimer = null;
@@ -303,7 +303,7 @@ Client.prototype.connect = function (host, port)
             self._pingTimer = setTimeout(function ()
             {
                 self._pingTimer = null;
-                self.send("PING", self._nickname);
+                self.send("PING", self.nickname);
 
             }, self.pingInterval);
 
@@ -503,7 +503,7 @@ handlers["JOIN"] = function (msg)
 
     if (prefix && this.isChannelName(channel))
     {
-        if (this.compareName(prefix.name, this._nickname))
+        if (this.compareName(prefix.name, this.nickname))
             ;// XXX: emit joinChannel event?
         else
             this.emit("userUpdate", prefix.name, "join", null, channel, null);
@@ -520,8 +520,8 @@ handlers["NICK"] = function (msg)
     if (prefix && newName) // XXX: check for valid nickname? I'm screwed anyway if the server sends
                            // something invalid..
     {
-        if (this.compareName(prefix.name, this._nickname))
-            this._nickname = newName; // XXX: emit nameChanged event?
+        if (this.compareName(prefix.name, this.nickname))
+            this.nickname = newName; // XXX: emit nameChanged event?
         else
             this.emit("userUpdate", prefix.name, "nickchange", newName, null, null);
     }
@@ -537,7 +537,7 @@ handlers["PART"] = function (msg)
 
     if (prefix && channel)
     {
-        if (this.compareName(prefix.name, this._nickname))
+        if (this.compareName(prefix.name, this.nickname))
             ; // XXX: emit leaveChannel event?
         else
             this.emit("userUpdate", prefix.name, "part", null, channel, message);
@@ -555,7 +555,7 @@ handlers["KICK"] = function (msg)
 
     if (prefix && channel && nickname)
     {
-        if (this.compareName(nickname, this._nickname))
+        if (this.compareName(nickname, this.nickname))
             ; // XXX: emit leaveChannel event?
         else
             // XXX: I didn't bother adding the name of the kicker to the parameter list, I could
@@ -573,7 +573,7 @@ handlers["QUIT"] = function (msg)
 
     if (prefix)
     {
-        if (this.compareName(prefix.name, this._nickname))
+        if (this.compareName(prefix.name, this.nickname))
             ; // XXX: does this ever occur?
         else
             this.emit("userUpdate", prefix.name, "quit", null, null, message);
@@ -645,8 +645,8 @@ handlers["PRIVMSG"] = function (msg)
             this.emit("channelMessage", channel, sender, message);
             return;
         }
-        // Message for us if first arg == this._nickname
-        else if (this.compareName(this._nickname, msg.args[0]))
+        // Message for us if first arg == this.nickname
+        else if (this.compareName(this.nickname, msg.args[0]))
         {
             var sender = prefix, message = msg.args[1];
             this.emit("privateMessage", sender, message);
@@ -663,7 +663,7 @@ handlers[codes.RPL_WELCOME] = function (msg)
 {
     this.state = "registered";
     this.emit("register", msg.args[0]);
-    this._nickname = msg.args[0];
+    this.nickname = msg.args[0];
 }
 
 

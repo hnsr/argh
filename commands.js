@@ -136,6 +136,12 @@ commands["leavemsg"] =
             var recipient = this.client.lowerCase(matches[1]);
             var message = matches[2];
 
+            if (this.client.compareName(recipient, this.client.nickname))
+            {
+                this.reply("not recording messages for myself!");
+                return;
+            }
+
             if (sender && recipient && message)
             {
                 data[recipient] = data[recipient] || []; // Initialize messages array if needed
