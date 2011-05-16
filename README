@@ -86,6 +86,7 @@ soon to be out of date) irc.Client documentation:
 
     userUpdate(name, type, newName, channel, message)
       emitted when a user joins, leaves or gets kicked from a channel, quits, or changes nickname.
+      'type' will be one of: 'join', 'nickchange', 'part', 'kick', 'quit'
 
     disconnect(error, message)
       emitted when disconnected. error and message are null unless the disconnection happened due to
