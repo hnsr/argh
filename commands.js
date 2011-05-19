@@ -98,9 +98,9 @@ commands["leavemsg"] =
     spamTimestamps: {},
     hooks:
     {
-        userUpdate: function (nickname, type, newname, channel, message)
+        userUpdate: function (nickname, type, newName, channel, message)
         {
-            var nickname = (type == "nickchange") ? newname : nickname;
+            var nickname = (type == "nickchange") ? newName : nickname;
 
             if ( type == "join" || type == "nickchange")
                 this.command.sendMessages.call(this, nickname, this.getData("messages"));
@@ -308,8 +308,6 @@ commands["image"] =
     }
 };
 
-// FIXME: Maybe store seen data per-nick, per-channel, i.e.
-// seenData = { <nickname1>: { <channel_a>: {}, <channel_b>: {} }, <nickname2>: { ...  } }
 // FIXME: also hook on channelMessage?
 commands["seen"] =
 {
@@ -317,43 +315,57 @@ commands["seen"] =
     description: "report when a specific nickname was last seen",
     hooks:
     {
-        userUpdate: function (nickname, type, newname, channel, message)
+        userUpdate: function (name, type, newName, channel, message)
         {
             var data = this.getData("seen");
+            var globalData = data.global || (data.global = {});
 
-            if (!nickname) return;
+            if (!name) return;
             var time = Date.now();
 
-            // Update entry in data with the 'seen' nickname as key, specifying type of interaction
-            // (join/leave) etc, and an optional message.
-            data[this.client.lowerCase(nickname)] = { time: time, type: type, channel: channel,
-                                                      newname: newname, message: message };
-
-            // Special case if changing nicks, add a record for the new nick as well.
-            if (type == "nickchange")
+            // Add to global or channel data depending on type of event:
+            if (type == "nickchange" || type == "quit")
             {
-                data[this.client.lowerCase(newname)] = {
-                    time: time,
-                    type: "nickchangefrom",
-                    fromname: nickname
+                globalData[this.client.lowerCase(name)] =
+                {
+                    time: time, type: type, newName: newName, message: message
+                };
+
+                // For nickchanges, add record for new nickname as well
+                if (type == "nickchange")
+                {
+                    globalData[this.client.lowerCase(newName)] =
+                    {
+                        time: time, type: "nickchangefrom", fromName: name
+                    };
+                }
+            }
+            else
+            {
+                var channels    = data.channels     || (data.channels     = {});
+                var channelData = channels[channel] || (channels[channel] = {});
+
+                channelData[this.client.lowerCase(name)] =
+                {
+                    time: time, type: type, message: message
                 };
             }
         },
         userList: function (channel, names)
         {
             var data = this.getData("seen");
-            var time = Date.now();
 
             if (!data || !names) return;
 
+            var channels = data.channels || (data.channels = {});
+            var channelData = channels[channel] || (channels[channel] = {});
+            var time = Date.now();
+
             for (var n in names)
             {
-                data[this.client.lowerCase(names[n])] = {
-                    time:    time,
-                    type:    "present",
-                    channel: channel,
-                    newname: null,
-                    message: null
+                channelData[this.client.lowerCase(names[n])] =
+                {
+                    time: time, type: "present"
                 };
             }
         }
@@ -361,6 +373,9 @@ commands["seen"] =
     handler: function (name)
     {
         var data = this.getData("seen");
+        var global   = data.global   || (data.global   = {});
+        var channels = data.channels || (data.channels = {});
+        var res, resChannel;
 
         if (!name)
         {
@@ -369,27 +384,51 @@ commands["seen"] =
         }
         var lcName = this.client.lowerCase(name);
 
-        if (data[lcName])
+        // Check channel records first, then global
+        for (var c in channels)
         {
-            var a = data[lcName], str;
-            var time = new Date(a.time).toString();
+            // Check this channel if .seen came in privately, or if it equals origin channel
+            if (!this.origin.channel || this.client.compareName(this.origin.channel, c))
+            {
+                // If there is a record for this nick, store it in res if it is more recent than
+                // whatever is in res currently.
+                if (channels[c][lcName])
+                {
+                    if (!res || res.time < channels[c][lcName])
+                    {
+                        res = channels[c][lcName];
+                        resChannel = c;
+                    }
+                }
+            }
+        }
+        // Also check global records
+        if (global[lcName])
+        {
+            if (!res || res.time < global[lcName].time)
+                res = global[lcName];
+        }
 
-            if (a.type == "nickchange")
-                str = "changing nickname to "+a.newname;
-            else if (a.type == "nickchangefrom")
-                str = "changing nickname from "+a.fromname;
-            else if (a.type == "join")
-                str = "joining "+a.channel;
-            else if (a.type == "part")
-                str = "leaving "+a.channel+" (message: "+a.message+")";
-            else if (a.type == "kick")
-                str = "being kicked from "+a.channel+" (reason: "+a.message+")";
-            else if (a.type == "quit")
-                str = "quitting (message "+a.message+")";
-            else if (a.type == "present")
-                str = "hanging out on "+a.channel;
+        if (res)
+        {
+            var str;
 
-            this.reply("i last saw '"+name+"' "+getFriendlyTime(a.time)+", "+str);
+            if (res.type == "nickchange")
+                str = "changing nickname to "+res.newName;
+            else if (res.type == "nickchangefrom")
+                str = "changing nickname from "+res.fromName;
+            else if (res.type == "join")
+                str = "joining "+resChannel;
+            else if (res.type == "part")
+                str = "leaving "+resChannel+" (message: "+res.message+")";
+            else if (res.type == "kick")
+                str = "being kicked from "+res.channel+" (reason: "+res.message+")";
+            else if (res.type == "quit")
+                str = "quitting (message: "+res.message+")";
+            else if (res.type == "present")
+                str = "hanging out on "+resChannel;
+
+            this.reply("i last saw '"+name+"' "+getFriendlyTime(res.time)+", "+str);
         }
         else
             this.reply("i haven't seen "+name+" yet :/");
