@@ -168,10 +168,10 @@ commands["youtube"] =
         channelMessage: function (channel, sender, message)
         {
             // Check if "youtube" occurs within message, then check full regex.
-            if (/youtube/.test(message))
+            if (/youtu(?:\.)?be/.test(message))
             {
                 var matches;
-                if (matches = /http:\/\/www.youtube.com(?:\/watch)?\?v=([^ &]+)/.exec(message))
+                if (matches = /(?:youtu.be\/|youtube\.com(?:\/watch)?\?v=)([^ &]+)/.exec(message))
                 {
                     var http = require("http");
                     var self = this;
