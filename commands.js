@@ -167,8 +167,8 @@ commands["youtube"] =
     {
         channelMessage: function (channel, sender, message)
         {
-            // Check if "youtube" occurs within message, then check full regex.
-            if (/youtu(?:\.)?be/.test(message))
+            // Do a simple check before using full regex.
+            if (/youtu/.test(message))
             {
                 var matches;
                 if (matches = /(?:youtu.be\/|youtube\.com(?:\/watch)?\?v=)([^ &]+)/.exec(message))
