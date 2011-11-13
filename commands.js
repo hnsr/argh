@@ -273,6 +273,7 @@ commands["image"] =
             return;
         }
 
+        // More info: http://code.google.com/apis/imagesearch/v1/jsondevguide.html
         var options =
         {
             host: "ajax.googleapis.com",
