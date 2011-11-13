@@ -59,6 +59,8 @@ client.on("privateMessage", onPrivateMessage);
 client.on("error",          onError);
 client.on("disconnect",     onDisconnect);
 
+log("Connecting to "+conf.host+":"+conf.port+"...");
+
 client.connect(conf.host, conf.port);
 
 // Setup a command prompt that can be used to give commands, and in emergencies can also eval code
