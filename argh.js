@@ -395,7 +395,7 @@ function onDisconnect(error, message)
         // Wait 20 seconds longer for each consecutive attempt, clamp to 300 (5 minutes);
         var timeWait = (retryCount * 20) > 80 ? 80 : (retryCount * 20);
 
-        log("Disconnected due to error: " + message);
+        log("Disconnected due to error: " + error + ", " + message);
         log("Will try to reconnect in "+timeWait+" seconds");
 
         retryTimer = setTimeout(function ()
