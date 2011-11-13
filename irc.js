@@ -226,8 +226,8 @@ Client.prototype._register = function ()
         this.disconnect(null, "out_of_nicknames", "failed to register, no more nicknames to try");
     }
 
-    if (this.pass)
-        this.send("PASS", this.pass);
+    if (this.password)
+        this.send("PASS", this.password);
 
     this.send("NICK", this.nicks[this._nicks_tried]);
 
