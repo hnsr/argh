@@ -256,7 +256,7 @@ Client.prototype.connect = function (host, port)
         return;
     }
 
-    var sock = new net.createConnection(port, host);
+    var sock = new net.createConnection(port ? port : 6667, host);
 
     self._sock = sock;
 

@@ -181,7 +181,7 @@ function saveJSON(path, outData)
     return false;
 }
 
-// Returns data loaded from JSON encoded config file
+// Load configuration from JSON encoded config file
 function loadConfig()
 {
     var confPath = confPrefix+"/config.js";
@@ -192,6 +192,9 @@ function loadConfig()
         error("failed to load configuration");
     }
     conf = loaded;
+
+    // Ensure some defaults
+    conf.port = conf.port ? conf.port : 6667;
 }
 
 // Synchroneously create a directory, fail silently if it already exists
