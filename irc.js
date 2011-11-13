@@ -21,10 +21,6 @@ function Client(options)
     // How long to wait for critical operation (i.e. QUIT) to complete.
     this.timeout = options.timeout || 10000;
 
-    // Delay before register attempt is made
-    // XXX: This doesn't seem needed, remove after trying a few more servers.
-    this.registerDelay = options.registerDelay || 0; // Delay before we attempt to register
-
     this.encoding     = options.encoding     || "utf8";
     this.username     = options.username     || "unknown";
     this.realname     = options.realname     || "unknown";
@@ -266,11 +262,7 @@ Client.prototype.connect = function (host, port)
     {
         self.state = "connected";
         self.emit("connect");
-
-        if (self.registerDelay)
-            setTimeout(function () { self._register() }, self.registerDelay);
-        else
-            self._register();
+        self._register();
     });
 
     var leftover = null;
