@@ -260,8 +260,9 @@ Client.prototype.connect = function (host, port)
 
     sock.on("connect", function ()
     {
+        self.remoteAddress = this.remoteAddress;
         self.state = "connected";
-        self.emit("connect");
+        self.emit("connect", this.remoteAddress);
         self._register();
     });
 

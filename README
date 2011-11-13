@@ -71,7 +71,7 @@ soon to be out of date) irc.Client documentation:
     output(msg)
       emitted when a raw protocol message is sent to the IRC server
 
-    connect()
+    connect(remoteAddress)
       emitted when a connection has been established to the IRC server (before registering)
 
     register(nickname)

@@ -337,9 +337,9 @@ function onOutput(msg)      { rawlog(">> " + msg) }
 function onInput(msg)       { rawlog("<< "+msg) }
 function onError(code, msg) { log("An error occured: "+msg); }
 
-function onConnect()
+function onConnect(remoteAddress)
 {
-    log("Connected to server");
+    log("Connected to "+remoteAddress);
 
     connectTime = Date.now();
 
