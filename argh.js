@@ -28,8 +28,8 @@ var startTime = Date.now();   // Time when we started
 var connectTime = null; // Time since last connect
 
 // Some magic to have everything that is logged prefixed with '**', and make 'log' an alias for it.
-var oldlog = console.log;
-console.log = function (msg) { oldlog("** "+msg) };
+var rawlog = console.log;
+console.log = function (msg) { rawlog("** "+msg) };
 var log = console.log;
 
 log("Argh " + version + " starting up");
@@ -333,8 +333,8 @@ function callCommandHooks(name, args)
 
 // irc.Client processing ///////////////////////////////////////////////////////////////////////////
 
-function onOutput(msg)      { oldlog(">> " + msg) }
-function onInput(msg)       { oldlog("<< "+msg) }
+function onOutput(msg)      { rawlog(">> " + msg) }
+function onInput(msg)       { rawlog("<< "+msg) }
 function onError(code, msg) { log("An error occured: "+msg); }
 
 function onConnect()
