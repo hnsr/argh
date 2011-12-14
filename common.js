@@ -18,6 +18,33 @@ function getFriendlyTime (timeMS, postfix)
 }
 
 
+function getTimestampStr(useUTC)
+{
+    var d = new Date();
+
+    if (useUTC)
+    {
+        var Y = d.getUTCFullYear();
+        var M = d.getUTCMonth()+1;
+        var D = d.getUTCDate();
+        var h = d.getUTCHours();
+        var m = d.getUTCMinutes();
+        var s = d.getUTCSeconds();
+    }
+    else
+    {
+        var Y = d.getFullYear();
+        var M = d.getMonth()+1;
+        var D = d.getDate();
+        var h = d.getHours();
+        var m = d.getMinutes();
+        var s = d.getSeconds();
+    }
+
+    return sprintf("[%04d-%02d-%02d %02d:%02d:%02d]", Y, M, D, h, m, s);
+}
+
+
 /**
 sprintf() for JavaScript 0.7-beta1
 http://www.diveintojavascript.com/projects/javascript-sprintf
@@ -451,6 +478,7 @@ function md5 (data)
 };
 
 exports.getFriendlyTime     = getFriendlyTime;
+exports.getTimestampStr     = getTimestampStr;
 exports.sprintf             = sprintf;
 exports.vsprintf            = vsprintf;
 exports.md5                 = md5;
