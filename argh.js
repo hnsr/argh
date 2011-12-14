@@ -4,9 +4,10 @@ var vm       = require("vm");
 var fs       = require("fs");
 var util     = require("util");
 var repl     = require("repl");
-var commands = require("./commands");
-var codes    = require("./irccodes");
-var irc      = require("./irc");
+var commands = require("./commands.js");
+var common   = require("./common.js");
+var codes    = require("./irccodes.js");
+var irc      = require("./irc.js");
 
 
 // Init ////////////////////////////////////////////////////////////////////////////////////////////
