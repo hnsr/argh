@@ -541,33 +541,74 @@ commands["echo"] =
 
 commands["eval"] =
 {
-    // using vm for this might not be entirely safe (infinite loops etc), see
-    // http://gf3.github.com/sandbox/ for a possible solution
-
     params: "<code>",
     description: "runs a piece of JavaScript in a sandbox",
     handler: function ()
     {
-        //if (!this.isFromTrusted()) return;
+        var self = this;
+        var output = "";
+        var outputErr = "";
+        var timedOut = false;
 
-        try
+        var child = require("child_process").spawn("node", [__dirname+"/eval-child.js"]);
+
+        var childTimeout = setTimeout(function ()
         {
-            var res = vm.runInNewContext(this.rawArgs, {});
-            if (typeof res == "string")
-            {
-                // Split by \n and print each individually
-                var lines = res.split("\n");
+            child.kill('SIGKILL'); timedOut = true;
 
-                for (l in lines)
-                    this.reply("result: "+lines[l]);
+        }, 10000); // FIXME: make the timeout value a setting
+
+        // Write the to-be-evaled code to child's stdin
+        child.stdin.end(self.rawArgs);
+
+        child.stdout.on("data", function (data)
+        {
+            output += data;
+        });
+
+        child.stderr.on("data", function (data)
+        {
+            outputErr += data;
+        });
+
+        child.on("exit", function (code)
+        {
+            if (timedOut)
+            {
+                self.reply("eval: code ran for too long!");
+            }
+            else if (code == 0)
+            {
+                try
+                {
+                    var evalResult = JSON.parse(output);
+                }
+                catch (err)
+                {
+                    console.log("eval: something bad happened.. (child produced invalid JSON): "+err);
+                }
+
+                if (!evalResult.error)
+                {
+                    // Special case for strings, split by \n and print line by line
+                    if (typeof evalResult.value == "string")
+                    {
+                        var lines = evalResult.value.split("\n");
+
+                        for (l in lines)
+                            self.reply("result: "+lines[l]);
+                    }
+                    else
+                        self.reply("result: "+util.inspect(evalResult.value));
+                }
+                else
+                    self.reply("eval: "+evalResult.value);
             }
             else
-                this.reply("result: "+util.inspect(res));
-        }
-        catch (err)
-        {
-            this.reply("eval: "+err);
-        }
+                console.log("eval: something bad happened.. (child exited with error status)");
+
+            clearTimeout(childTimeout);
+        });
     }
 };
 
