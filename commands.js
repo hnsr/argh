@@ -558,7 +558,7 @@ commands["eval"] =
 
         }, 10000); // FIXME: make the timeout value a setting
 
-        // Write the to-be-evaled code to child's stdin
+        // Write the to-be-evaled code to child's stdin and immediately close the stream
         child.stdin.end(self.rawArgs);
 
         child.stdout.on("data", function (data)
@@ -571,7 +571,7 @@ commands["eval"] =
             outputErr += data;
         });
 
-        child.on("exit", function (code)
+        child.on("exit", function (code, signal)
         {
             if (timedOut)
             {
@@ -585,7 +585,7 @@ commands["eval"] =
                 }
                 catch (err)
                 {
-                    console.log("eval: something bad happened.. (child produced invalid JSON): "+err);
+                    console.log("eval: something bad happened, child produced invalid JSON: "+err);
                 }
 
                 if (!evalResult.error)
@@ -605,7 +605,14 @@ commands["eval"] =
                     self.reply("eval: "+evalResult.value);
             }
             else
-                console.log("eval: something bad happened.. (child exited with error status)");
+            {
+                // A bit hacky, but there doesn't seem to be a better way to detect this..
+                if (outputErr.search(/JS Allocation failed/i))
+                    self.reply("eval: code used too much memory!");
+                else
+                    console.log("eval: something bad happened, child exited with code "+code+
+                                ", and signal "+signal);
+            }
 
             clearTimeout(childTimeout);
         });
