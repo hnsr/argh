@@ -554,9 +554,10 @@ commands["eval"] =
 
         var childTimeout = setTimeout(function ()
         {
-            child.kill('SIGKILL'); timedOut = true;
+            child.kill('SIGKILL');
+            timedOut = true;
 
-        }, 10000); // FIXME: make the timeout value a setting
+        }, this.conf.evalTimeout > 0 ? this.conf.evalTimeout : 10000);
 
         // Write the to-be-evaled code to child's stdin and immediately close the stream
         child.stdin.end(self.rawArgs);
