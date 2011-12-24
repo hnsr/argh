@@ -30,6 +30,7 @@ function getTimestampStr(useUTC)
         var h = d.getUTCHours();
         var m = d.getUTCMinutes();
         var s = d.getUTCSeconds();
+        return sprintf("[%04d-%02d-%02d %02d:%02d:%02d]", Y, M, D, h, m, s);
     }
     else
     {
@@ -39,9 +40,10 @@ function getTimestampStr(useUTC)
         var h = d.getHours();
         var m = d.getMinutes();
         var s = d.getSeconds();
+        var z = -(d.getTimezoneOffset()/60);
+        return sprintf("[%04d-%02d-%02d %02d:%02d:%02d UTC%+f]", Y, M, D, h, m, s, z);
     }
 
-    return sprintf("[%04d-%02d-%02d %02d:%02d:%02d]", Y, M, D, h, m, s);
 }
 
 
