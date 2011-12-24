@@ -826,7 +826,11 @@ commands["md5"] =
     {
         if (!this.rawArgs) return;
 
-        this.reply("md5: " + common.md5(this.rawArgs));
+        var md5sum = require("crypto").createHash("md5");
+
+        md5sum.update(this.rawArgs);
+
+        this.reply("md5: " + md5sum.digest("hex"));
     }
 };
 
