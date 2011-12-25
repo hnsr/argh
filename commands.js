@@ -436,7 +436,7 @@ commands["pigs"] =
     {
         var data = this.getData("pig");
         var str = "", count = 3;
-        var top = this.getTop(count, data, function (a,b) { return a > b; } );
+        var top = common.getTop(count, data, function (a,b) { return a > b; } );
 
         for (var i in top)
         {

@@ -47,6 +47,30 @@ function getTimestampStr(useUTC)
 }
 
 
+// Returns array of the count 'topmost' keys in obj. 'topmost' is defined by the given compareFunc,
+// which is passed two values associated with two keys in obj, and should return true if the first
+// is to be considered larger/higher than the second.
+function getTop(count, obj, compareFunc)
+{
+    var top = [];
+
+    for (var key in obj)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            if (!top[i] || compareFunc(obj[key], obj[top[i]]))
+            {
+                top.splice(i, 0, key);
+                top.length = count; // Trim here so it doesnt grow too big
+                break;
+            }
+        }
+    }
+
+    return top;
+}
+
+
 /**
 sprintf() for JavaScript 0.7-beta1
 http://www.diveintojavascript.com/projects/javascript-sprintf
@@ -204,6 +228,7 @@ var vsprintf = function(fmt, argv) {
 
 exports.getFriendlyTime     = getFriendlyTime;
 exports.getTimestampStr     = getTimestampStr;
+exports.getTop              = getTop;
 exports.sprintf             = sprintf;
 exports.vsprintf            = vsprintf;
 

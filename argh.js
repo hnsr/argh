@@ -120,28 +120,6 @@ function getEscapedCmdPrefix()
         error("command_prefix setting is invalid");
 }
 
-// Returns array of the count 'topmost' keys in obj (topmost defined by higherThanFunc).
-function getTop(count, obj, higherThanFunc)
-{
-    var top = [];
-
-    // Loop over obj key/value pairs, if value > top[0] OR !top[0], insert there
-    for (var key in obj)
-    {
-        for (var i = 0; i < count; i++)
-        {
-            if (!top[i] || higherThanFunc(obj[key], obj[top[i]]))
-            {
-                top.splice(i, 0, key);
-                top.length = count; // Trim here so it doesnt grow too big
-                break;
-            }
-        }
-    }
-
-    return top;
-}
-
 // Load and parse json from file at given path, returns false on failure, else the parsed data.
 function loadJSON(path)
 {
@@ -525,8 +503,6 @@ function CommandContext(command, origin, name, rawArgs)
 // more assignments every time a command is invoked.
 CommandContext.prototype.version     = version;
 CommandContext.prototype.log         = log;
-CommandContext.prototype.log         = log;
-CommandContext.prototype.getTop      = getTop;
 CommandContext.prototype.getData     = getData;
 CommandContext.prototype.saveData    = saveData;
 CommandContext.prototype.client      = client;
