@@ -154,7 +154,7 @@ commands["youtube"] =
             if (/youtu/.test(message))
             {
                 var matches;
-                if (matches = /(?:youtu.be\/|youtube\.com(?:\/watch)?\?v=)([^ &]+)/.exec(message))
+                if (matches = /(?:youtu.be\/|youtube\.com.*?[&\?]v=)([^ &]+)/.exec(message))
                 {
                     var http = require("http");
                     var self = this;
