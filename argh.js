@@ -502,13 +502,19 @@ function CommandContext(command, origin, name, rawArgs)
 // XXX: Consider putting these in the constructor? makes more sense, even if it means I have a bunch
 // more assignments every time a command is invoked.
 CommandContext.prototype.version     = version;
-CommandContext.prototype.log         = log;
 CommandContext.prototype.getData     = getData;
 CommandContext.prototype.saveData    = saveData;
 CommandContext.prototype.client      = client;
 CommandContext.prototype.conf        = conf;
 CommandContext.prototype.commands    = commands;
 CommandContext.prototype.data        = data;
+
+
+// Write log message for command
+CommandContext.prototype.log = function (message)
+{
+    log(this.name+": "+message);
+}
 
 
 // Add given piglevel to sender of message to punish for incorrect usage. If amount2 is given as

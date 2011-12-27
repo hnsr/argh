@@ -586,7 +586,7 @@ commands["eval"] =
                 }
                 catch (err)
                 {
-                    console.log("eval: something bad happened, child produced invalid JSON: "+err);
+                    self.log("something bad happened, child produced invalid JSON: "+err);
                 }
 
                 if (!evalResult.error)
@@ -611,8 +611,7 @@ commands["eval"] =
                 if (outputErr.search(/JS Allocation failed/i))
                     self.reply("eval: code used too much memory!");
                 else
-                    console.log("eval: something bad happened, child exited with code "+code+
-                                ", and signal "+signal);
+                    self.log("child exited with error code " + code + ", and signal " + signal);
             }
 
             clearTimeout(childTimeout);
