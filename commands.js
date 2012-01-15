@@ -546,8 +546,9 @@ commands["eval"] =
     handler: function ()
     {
         var self = this;
+        var timeout = this.conf.evalTimeout;
 
-        common.runCode(self.rawArgs, this.conf.evalTimeout, onExit, onError);
+        common.runCode(self.rawArgs, (timeout ? timeout : 10000), onExit, onError);
 
         function onExit(value, valueStr)
         {
