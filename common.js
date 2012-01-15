@@ -71,6 +71,75 @@ function getTop(count, obj, compareFunc)
 }
 
 
+// Run code in an isolated child process with timeout. Timeout is ignored when not a positive
+// number. exitFunc is called when the code has been succesfully executed and is passed the result
+// as first parameter, and a string representation of the value as second paramter (using
+// util.inspect). On error, errorFunc is called with a string indicating the type of error and an
+// optional message. TODO: Maybe exceptions are a better way to handle errors here
+function runCode(evalCode, timeout, exitFunc, errorFunc)
+{
+    var output = "";
+    var outputErr = "";
+    var timedOut = false;
+    var timeoutHandle;
+
+    var child = require("child_process").spawn("node", [__dirname+"/eval-child.js"]);
+
+    // Kill child process after timeout ms, if given
+    if (timeout > 0)
+    {
+        timeoutHandle = setTimeout(function ()
+            {
+                child.kill('SIGKILL');
+                timedOut = true;
+            },
+            timeout);
+    }
+
+    // Write the code that is to be evaluated to child's stdin and immediately close the stream
+    child.stdin.end(evalCode);
+
+    child.stdout.on("data", function (data) { output    += data; });
+    child.stderr.on("data", function (data) { outputErr += data; });
+
+    child.on("exit", function (code, signal)
+    {
+        if (timedOut)
+        {
+            errorFunc("timeout");
+        }
+        else if (code == 0)
+        {
+            try
+            {
+                var evalResult = JSON.parse(output);
+            }
+            catch (err)
+            {
+                errorFunc("unknown", "something bad happened, child produced invalid JSON: " + err);
+                return;
+            }
+
+            if (!evalResult.error)
+                exitFunc(evalResult.value, evalResult.valueStr);
+            else
+                errorFunc("code_error", evalResult.errorMsg);
+        }
+        else
+        {
+            // A bit hacky, but there doesn't seem to be a better way to detect this..
+            if (outputErr.search(/JS Allocation failed/i))
+                errorFunc("memory");
+            else
+                errorFunc("unknown", "child exited with error code " + code + ", and signal " +
+                                     signal);
+        }
+
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+    });
+}
+
+
 /**
 sprintf() for JavaScript 0.7-beta1
 http://www.diveintojavascript.com/projects/javascript-sprintf
@@ -229,6 +298,7 @@ var vsprintf = function(fmt, argv) {
 exports.getFriendlyTime     = getFriendlyTime;
 exports.getTimestampStr     = getTimestampStr;
 exports.getTop              = getTop;
+exports.runCode             = runCode;
 exports.sprintf             = sprintf;
 exports.vsprintf            = vsprintf;
 

@@ -546,76 +546,31 @@ commands["eval"] =
     handler: function ()
     {
         var self = this;
-        var output = "";
-        var outputErr = "";
-        var timedOut = false;
 
-        var child = require("child_process").spawn("node", [__dirname+"/eval-child.js"]);
+        common.runCode(self.rawArgs, this.conf.evalTimeout, onExit, onError);
 
-        var childTimeout = setTimeout(function ()
+        function onExit(value, valueStr)
         {
-            child.kill('SIGKILL');
-            timedOut = true;
-
-        }, this.conf.evalTimeout > 0 ? this.conf.evalTimeout : 10000);
-
-        // Write the to-be-evaled code to child's stdin and immediately close the stream
-        child.stdin.end(self.rawArgs);
-
-        child.stdout.on("data", function (data)
-        {
-            output += data;
-        });
-
-        child.stderr.on("data", function (data)
-        {
-            outputErr += data;
-        });
-
-        child.on("exit", function (code, signal)
-        {
-            if (timedOut)
+            // Special case for strings, split by \n and print line by line
+            if (typeof value == "string")
             {
-                self.reply("eval: code ran for too long!");
-            }
-            else if (code == 0)
-            {
-                try
-                {
-                    var evalResult = JSON.parse(output);
-                }
-                catch (err)
-                {
-                    self.log("something bad happened, child produced invalid JSON: "+err);
-                }
+                var lines = value.split("\n");
 
-                if (!evalResult.error)
-                {
-                    // Special case for strings, split by \n and print line by line
-                    if (typeof evalResult.value == "string")
-                    {
-                        var lines = evalResult.value.split("\n");
-
-                        for (l in lines)
-                            self.reply("result: "+lines[l]);
-                    }
-                    else
-                        self.reply("result: "+util.inspect(evalResult.value));
-                }
-                else
-                    self.reply("eval: "+evalResult.value);
+                for (l in lines)
+                    self.reply("result: "+lines[l]);
             }
+            // Else just print the util.inspect string
             else
-            {
-                // A bit hacky, but there doesn't seem to be a better way to detect this..
-                if (outputErr.search(/JS Allocation failed/i))
-                    self.reply("eval: code used too much memory!");
-                else
-                    self.log("child exited with error code " + code + ", and signal " + signal);
-            }
+                self.reply("result: " + valueStr);
+        }
 
-            clearTimeout(childTimeout);
-        });
+        function onError(type, message)
+        {
+            if      (type == "timeout")    self.reply("eval: code ran for too long!");
+            else if (type == "code_error") self.reply("eval: "+message);
+            else if (type == "memory")     self.reply("eval: code used too much memory!");
+            else if (type == "unknown")    self.log(message);
+        }
     }
 };
 

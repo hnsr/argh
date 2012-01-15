@@ -22,12 +22,14 @@ process.stdin.on('end', function ()
     try
     {
         var res = vm.runInNewContext(code, {});
-        evalResult.value = res;
+
+        evalResult.value    = res;
+        evalResult.valueStr = util.inspect(res);
     }
     catch (err)
     {
         evalResult.error = true;
-        evalResult.value = err.toString();
+        evalResult.errorMsg = err.toString();
     }
 
     process.stdout.write(JSON.stringify(evalResult));
