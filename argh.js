@@ -238,6 +238,8 @@ function loadData()
 // Write out data objects to files.
 function saveData()
 {
+    log("Saving data");
+
     // Loop over data array, save each element to file, make sure that key has no funny
     // characters in it (just /[a-z0-9]+/i)
     for (var file in data)
