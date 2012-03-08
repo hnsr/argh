@@ -84,9 +84,13 @@ soon to be out of date) irc.Client documentation:
     privateMessage(sender, message)
       emitted when a private message is received, see channelMessage.
 
-    userUpdate(name, type, newName, channel, message)
+    userUpdate(name, type, altName, channel, message)
       emitted when a user joins, leaves or gets kicked from a channel, quits, or changes nickname.
-      'type' will be one of: 'join', 'nickchange', 'part', 'kick', 'quit'
+      'type' will be one of: 'join', 'nickchange', 'part', 'kick', 'quit'. This event is also
+      emitted for things that happen to the client itself. The meaning of 'altName' depends on type
+      (i.e. the new nickname for a 'nickchange' event, or the name of the person that performed a
+      kick for the 'kick' event). For some events 'altName', 'channel' or 'message' are unused
+      (set to null).
 
     disconnect(error, message)
       emitted when disconnected. error and message are null unless the disconnection happened due to
