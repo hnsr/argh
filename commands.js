@@ -185,9 +185,6 @@ commands["youtube"] =
                 }
             }
         }
-    },
-    handler: function ()
-    {
     }
 };
 
