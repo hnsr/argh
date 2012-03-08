@@ -469,7 +469,7 @@ function runCommand(pcmd, origin)
 {
     var command = commands[pcmd.name];
 
-    if (command)
+    if (command && command.handler)
     {
         var ctx = new CommandContext(command, origin, pcmd.name, pcmd.rawArgs);
 
