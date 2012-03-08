@@ -794,3 +794,18 @@ commands["md5"] =
     }
 };
 
+// Code for kick handling
+commands["autorejoin"] = {
+	description: "Kick handling",
+	hooks: {
+		userUpdate: function (nickname, type, newName, channel, message) {
+			if (type == "kick") {
+				if ( nickname == this.client.nickname) {
+					this.log("Got kicked by " + newName + " from channel " + channel);
+					// Trying to rejoining channel
+					this.client.joinChannel(channel);
+				}
+			}
+        	}
+	}
+};
