@@ -639,7 +639,7 @@ commands["info"] =
             "connect time: "+getFriendlyTime(this.getTimes().connectTime, "")+", "+
             "platform: "+process.platform+", "+
             "node version: "+process.version+", "+
-            "sources: http://aphax.nl/cgit/argh"
+            "home: http://github.com/hnsr/argh"
         );
 
     }
