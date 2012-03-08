@@ -248,6 +248,7 @@ Client.prototype.connect = function (host, port)
 
     if (self.state != "disconnected")
     {
+	// might want to disconnect here first and then reconnect? (MN: 2012-03-08)
         warning("can't connect when already connected");
         return;
     }
