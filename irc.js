@@ -495,12 +495,7 @@ handlers["JOIN"] = function (msg)
     var channel = msg.args[0];
 
     if (prefix && this.isChannelName(channel))
-    {
-        if (this.compareName(prefix.name, this.nickname))
-            ;// XXX: emit joinChannel event?
-        else
-            this.emit("userUpdate", prefix.name, "join", null, channel, null);
-    }
+        this.emit("userUpdate", prefix.name, "join", null, channel, null);
     else
         warning("malformed JOIN: "+msg.raw);
 }
@@ -514,9 +509,9 @@ handlers["NICK"] = function (msg)
                            // something invalid..
     {
         if (this.compareName(prefix.name, this.nickname))
-            this.nickname = newName; // XXX: emit nameChanged event?
-        else
-            this.emit("userUpdate", prefix.name, "nickchange", newName, null, null);
+            this.nickname = newName;
+
+        this.emit("userUpdate", prefix.name, "nickchange", newName, null, null);
     }
     else
         warning("malformed NICK: "+msg.raw);
@@ -529,12 +524,7 @@ handlers["PART"] = function (msg)
     var message = msg.args[1];
 
     if (prefix && channel)
-    {
-        if (this.compareName(prefix.name, this.nickname))
-            ; // XXX: emit leaveChannel event?
-        else
-            this.emit("userUpdate", prefix.name, "part", null, channel, message);
-    }
+        this.emit("userUpdate", prefix.name, "part", null, channel, message);
     else
         warning("malformed PART: "+msg.raw);
 }
@@ -547,14 +537,7 @@ handlers["KICK"] = function (msg)
     var message  = msg.args[2];
 
     if (prefix && channel && nickname)
-    {
-        if (this.compareName(nickname, this.nickname))
-            ; // XXX: emit leaveChannel event?
-        else
-            // XXX: I didn't bother adding the name of the kicker to the parameter list, I could
-            // reuse the third parameter for this..
-            this.emit("userUpdate", nickname, "kick", null, channel, message);
-    }
+        this.emit("userUpdate", nickname, "kick", prefix.name, channel, message);
     else
         warning("malformed PART: "+msg.raw);
 }
