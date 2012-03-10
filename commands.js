@@ -806,6 +806,6 @@ commands["autorejoin"] = {
 					this.client.joinChannel(channel);
 				}
 			}
-        	}
+        }
 	}
 };

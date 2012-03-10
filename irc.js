@@ -657,11 +657,22 @@ handlers[codes.RPL_ISUPPORT] = function (msg)
     }
 }
 
-
+// Handle nick in use error
 handlers[codes.ERR_NICKNAMEINUSE] = function (msg)
 {
     warning("nickname in use, trying again with next");
     this._register();
+}
+
+// Handle banned from channel error
+handlers[codes.ERR_BANNEDFROMCHAN] = function(msg) {
+	// Adding timer to try to join channel every minute
+	var thisRef = this;
+	retryTimer = setTimeout(function () {
+            retryTimer = null;
+			thisRef.joinChannel(msg.args[1]);
+        },
+        60000);
 }
 
 
