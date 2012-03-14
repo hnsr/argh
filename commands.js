@@ -4,10 +4,10 @@ var common = require("./common.js");
 
 var getFriendlyTime = common.getFriendlyTime;
 
-var commands = module.exports = {};
+var modules = module.exports = {};
 
 
-commands["wipemsg"] =
+modules["wipemsg"] =
 {
     description: "delete any messages others left for you",
     handler: function ()
@@ -30,7 +30,7 @@ commands["wipemsg"] =
 // message recipient by hostname, which is annoying.. I could keep records of nicknames I've
 // encountered along with hostnames and do something with that data, but also tricky and not
 // foolproof..
-commands["leavemsg"] =
+modules["leavemsg"] =
 {
     params: "<nickname> <message>",
     description: "leave a message for user. WARNING: don't use for private/critical stuff, its"+
@@ -144,7 +144,7 @@ commands["leavemsg"] =
 }
 
 // Search for youtube videos, also prints titles for videos linked in a channel
-commands["youtube"] =
+modules["youtube"] =
 {
     // Helper function for querying the youtube API for movie info on given video ID or search query
     fetchInfo: function (query, doSearch, resFunc)
@@ -229,7 +229,7 @@ commands["youtube"] =
     }
 };
 
-commands["google"] =
+modules["google"] =
 {
     params: "<query>",
     description: "list first result for query",
@@ -279,7 +279,7 @@ commands["google"] =
     }
 };
 
-commands["image"] =
+modules["image"] =
 {
     params: "<query>",
     description: "list first google images result for query",
@@ -331,7 +331,7 @@ commands["image"] =
 };
 
 // FIXME: also hook on channelMessage?
-commands["seen"] =
+modules["seen"] =
 {
     params: "<nickname>",
     description: "report when a specific nickname was last seen",
@@ -458,7 +458,7 @@ commands["seen"] =
 };
 
 
-commands["coffee"] =
+modules["coffee"] =
 {
     description: "coffee!",
     handler: function ()
@@ -467,7 +467,7 @@ commands["coffee"] =
     }
 };
 
-commands["pigs"] =
+modules["pigs"] =
 {
     description: "show biggest piggers",
     handler: function ()
@@ -487,7 +487,7 @@ commands["pigs"] =
     }
 };
 
-commands["showpig"] =
+modules["showpig"] =
 {
     params: "<nickname>",
     description: "display nickname's level of pig",
@@ -512,7 +512,7 @@ commands["showpig"] =
 
 
 // FIXME: make random, use larger amounts so its not  as useless compared with punish()
-commands["pig"] =
+modules["pig"] =
 {
     params: "<nickname>",
     description: "increase someone's level of pig",
@@ -529,17 +529,17 @@ commands["pig"] =
 };
 
 
-commands["help"] =
+modules["help"] =
 {
     params: "<command>",
-    description: "list all commands available or show info for a specific command",
+    description: "list all modules available or show info for a specific command",
     handler: function (name)
     {
         var cmd;
 
         name = name && name.toLowerCase();
 
-        if (name && (cmd = this.commands[name]))
+        if (name && (cmd = this.modules[name]))
         {
             if (cmd.params && cmd.description)
                 this.replyPrivately(name+" "+cmd.params+": "+cmd.description);
@@ -550,11 +550,11 @@ commands["help"] =
         }
         else
         {
-            var str = "supported commands: ";
+            var str = "supported modules: ";
 
-            for (var c in this.commands)
+            for (var c in this.modules)
             {
-                var cmd = this.commands[c];
+                var cmd = this.modules[c];
 
                 if (cmd.description) str += c+" ";
             }
@@ -566,7 +566,7 @@ commands["help"] =
 };
 
 
-commands["echo"] =
+modules["echo"] =
 {
     params: "<string>",
     description: "echo!",
@@ -577,7 +577,7 @@ commands["echo"] =
 };
 
 
-commands["eval"] =
+modules["eval"] =
 {
     params: "<code>",
     description: "runs a piece of JavaScript in a sandbox",
@@ -613,7 +613,7 @@ commands["eval"] =
     }
 };
 
-commands["savedata"] =
+modules["savedata"] =
 {
     description: "save command data (must be trusted)",
     handler: function ()
@@ -625,7 +625,7 @@ commands["savedata"] =
     }
 }
 
-commands["leavechan"] =
+modules["leavechan"] =
 {
     params: "<channel> <message>",
     description: "leave a channel (must be trusted)",
@@ -637,7 +637,7 @@ commands["leavechan"] =
     }
 };
 
-commands["joinchan"] =
+modules["joinchan"] =
 {
     params: "<channel>",
     description: "join a channel (must be trusted)",
@@ -649,7 +649,7 @@ commands["joinchan"] =
     }
 };
 
-commands["pick"] =
+modules["pick"] =
 {
 	description: "randomly pick an item out of a list of items (separated with commas)",
 	handler: function ()
@@ -669,7 +669,7 @@ commands["pick"] =
     }
 }
 
-commands["info"] =
+modules["info"] =
 {
     description: "display some miscellaneous info",
     handler: function ()
@@ -686,7 +686,7 @@ commands["info"] =
     }
 };
 
-commands["quit"] =
+modules["quit"] =
 {
     description: "quit! (must be trusted)",
     handler: function ()
@@ -698,7 +698,7 @@ commands["quit"] =
 };
 
 // FIXME: Rewrite this to use Buffer, that way i can support utf8 instead of restricting to ascii
-commands["ascii"] =
+modules["ascii"] =
 {
     description: "turn binary/hexadecimal ascii-encoded string into normal text",
     params: "<hex/bin> <string> or just <string> (tries to guess if its binary or hexadecimals)",
@@ -746,7 +746,7 @@ commands["ascii"] =
     }
 };
 
-commands["bin"] =
+modules["bin"] =
 {
     description: "turn ascii text into binary",
     params: "<string>",
@@ -770,7 +770,7 @@ commands["bin"] =
     }
 };
 
-commands["hex"] =
+modules["hex"] =
 {
     description: "turn ascii text into hexadecimals",
     params: "<string>",
@@ -794,7 +794,7 @@ commands["hex"] =
     }
 };
 
-commands["rot13"] =
+modules["rot13"] =
 {
     description: "encrypt text using the highly secure rot13 algorithm!",
     params: "<string>",
@@ -819,7 +819,7 @@ commands["rot13"] =
     }
 };
 
-commands["md5"] =
+modules["md5"] =
 {
     description: "calculate md5 hash of given string",
     params: "<string>",
@@ -836,7 +836,7 @@ commands["md5"] =
 };
 
 // Code for kick handling
-commands["autorejoin"] = {
+modules["autorejoin"] = {
 	description: "Kick handling",
 	hooks: {
 		userUpdate: function (nickname, type, newName, channel, message) {

@@ -2,7 +2,7 @@ This is an IRC bot written in javascript that runs on node.js, here are some not
 running and how it can be extended:
 
   Configuration is stored in JSON format under ~/.argh/config.js. The various bits of data used by
-  commands and internal stuff is stored under ~/.argh/data/*.js (each JS file containing a JSON
+  modules and internal stuff is stored under ~/.argh/data/*.js (each JS file containing a JSON
   encoded object for each type of data (ie. one file for .seen records, another for .leavemsg).
 
   The directory structure is created automatically if it doesnt exist, though the config.js file
@@ -11,7 +11,7 @@ running and how it can be extended:
     {
       "host": "irc.example.com",
       "port": 6667,
-      "command_prefix": ".",
+      "module_prefix": ".",
       "nicks":    [ "arghh", "arghhh", "arghhhh" ],
       "channels": [ "#foo", "#bar" ],
       "trusted_hosts": [
@@ -22,37 +22,34 @@ running and how it can be extended:
       "burstPeriod": 3000
     }
 
-  (trusted_hosts is an array with hostnames that are allowed to run 'trusted' commands. the
+  (trusted_hosts is an array with hostnames that are allowed to run 'trusted' modules. the
   burstCount/burstPeriod are for throttling messages, in this case at most 2 messages per 3 seconds
   are allowed)
 
   An evil irc server/oper could trick argh into doing evil stuff if it changes its hostname into one
-  of the trusted hosts since it could then run trusted commands (like maybe .addcommand if/once I
+  of the trusted hosts since it could then run trusted modules (like maybe .addmodule if/once I
   add that, which would run at the same privelege level as the user argh runs at). Therefore leave
   trusted_hosts empty or properly isolate/jail argh
 
 
-Adding commands:
+Adding modules:
 
-  Commands are defined in commands.js, in an object with command names used as index/property, see
-  the source for some example commands. A command consists of a single function called when the
-  command is invoked and hook functions for hooking into IRC events (for example a message arriving
-  on a channel or a user quitting) for data-gathering purposes. Commands are a bit of a misnomer,
-  should probably have called them 'modules' or something, the youtube command for example isn't
-  really a command but just hooks into the channelMessage event to look for youtube links, so it can
-  fetch the title and print it back to the channel.
+  Modules are defined in modules.js, in an object with module names used as index/property, see
+  the source for some example modules. A module consists of a single function called when the
+  module is invoked and hook functions for hooking into IRC events (for example a message arriving
+  on a channel or a user quitting) for data-gathering purposes. 
 
-  the hook and command functions are called with a CommandContext instance used as context object
+  The hook and module functions are called with a CommandContext instance used as context object
   (the 'this' value) to provide some convenient functions like 'this.reply("foo")' to reply to the
-  user that invoked the command. see argh.js on what is available. Hook functions can't use the
-  reply() function though since they don't have an origin (= where a command invocation came from)
+  user that invoked the module. see argh.js on what is available. Hook functions can't use the
+  reply() function though since they don't have an origin (= where a module invocation came from)
   property. But you can send messages from hooks directly through the this.client object.
 
-  in the future i'd like to make it possible to have user-defined commands stored somewhere under
-  ~/.argh/ that can be reloaded on the fly, and maybe even adding simple commands over IRC (for
-  trusted users of course, command functions are run in the same vm context as the main argh code)
+  In the future i'd like to make it possible to have user-defined modules stored somewhere under
+  ~/.argh/ that can be reloaded on the fly, and maybe even adding simple modules over IRC (for
+  trusted users of course, module functions are run in the same vm context as the main argh code)
 
-  there is a simple and dumb infrastructure for storing arbitraty data; CommandContext.getData("foo")
+  There is a simple and dumb infrastructure for storing arbitraty data; CommandContext.getData("foo")
   returns a handle to an object, and when exiting (or when saveData()/.savaData is called) this object
   is dumped (as JSON) into ~/.argh/data/foo.js. the parameter to getData can only contain
   alphabetical characters or digits (this is checked before data is dumped to file). getData should
@@ -109,7 +106,7 @@ soon to be out of date) irc.Client documentation:
       the following properties, of which the 'nicks' property is the only one required:
 
         options.timeout:
-          How long to wait for certain commands (QUIT) to complete before taking forced action
+          How long to wait for certain modules (QUIT) to complete before taking forced action
 
         options.encoding:
           Encoding to use for the connection, only 'ascii' and 'utf8' are supported for now

@@ -4,7 +4,7 @@ var vm       = require("vm");
 var fs       = require("fs");
 var util     = require("util");
 var repl     = require("repl");
-var commands = require("./commands.js");
+GLOBAL.modules  = new Array;//  = require("./modules.js");
 var common   = require("./common.js");
 var codes    = require("./irccodes.js");
 var irc      = require("./irc.js");
@@ -21,10 +21,10 @@ var retryResetTimer; // !null if we've connected and haven't reset retryCount ye
 var client;
 var data; // Object with persistent data objects
 
-var commandHooks;  // Object with for each 'event' an array of objects specifying a handler function
-                   // and a context to invoke that handler function with, for each command hooking
+var moduleHooks;  // Object with for each 'event' an array of objects specifying a handler function
+                   // and a context to invoke that handler function with, for each module hooking
                    // into that event.
-
+var moduleCommands; // Object for all commands possible
 var startTime = Date.now();   // Time when we started
 var connectTime = null; // Time since last connect
 
@@ -48,6 +48,8 @@ client = new irc.Client(
 });
 
 loadData();
+loadModules(false);
+initHooks();
 initCommands();
 
 client.on("output",         onOutput);
@@ -63,26 +65,24 @@ client.on("disconnect",     onDisconnect);
 
 log("Connecting to "+conf.host+":"+conf.port+"...");
 
-client.connect(conf.host, conf.port);
+//client.connect(conf.host, conf.port);
 
-// Setup a command prompt that can be used to give commands, and in emergencies can also eval code
+// Setup a module prompt that can be used to give modules, and in emergencies can also eval code
 // in this file's local scope to fix things on the fly:
 var prompt = repl.start("> ");
 
 log(""); // Prevent first log message ending up behind prompt
 
-prompt.context.run = function (cmd)
-{
+prompt.context.run = function (cmd) {
     var pcmd;
 
-    if (pcmd = parseCommand(cmd))
+    if (pcmd = parseModule(cmd))
     {
         var origin = { fromConsole: true };
         runCommand(pcmd, origin);
     }
 }
-prompt.context.eval = function (code)
-{
+prompt.context.eval = function (code) {
     try
     {
         eval(code);
@@ -93,19 +93,16 @@ prompt.context.eval = function (code)
     }
 }
 
-
 // Misc functions //////////////////////////////////////////////////////////////////////////////////
 
 function error   (message) { log("ERROR: "  +message); process.exit(1); }
 function warning (message) { log("WARNING: "+message); }
 function debug   (message) { log("DEBUG: "  +message); }
 
-
-// Returns unicode-escaped command prefix character for safe use in RegExp string, i.e "\\u005c"
-function getEscapedCmdPrefix()
-{
+// Returns unicode-escaped module prefix character for safe use in RegExp string, i.e "\\u005c"
+function getEscapedCmdPrefix() {
     // Just take the first character and turn it into a unicode escape sequence
-    var prefix = conf.command_prefix.charCodeAt(0);
+    var prefix = conf.module_prefix.charCodeAt(0);
     var prefixHex = prefix.toString(16);
 
     if (prefixHex.length > 0 && prefixHex.length < 5)
@@ -117,12 +114,11 @@ function getEscapedCmdPrefix()
         return "\\u" + prefixHex;
     }
     else
-        error("command_prefix setting is invalid");
+        error("module_prefix setting is invalid");
 }
 
 // Load and parse json from file at given path, returns false on failure, else the parsed data.
-function loadJSON(path)
-{
+function loadJSON(path) {
     var json;
 
     try
@@ -138,8 +134,7 @@ function loadJSON(path)
 }
 
 // JSONify and save data to path, returns false on failure.
-function saveJSON(path, outData)
-{
+function saveJSON(path, outData) {
     var json = JSON.stringify(outData, null, 4);
 
     if (json)
@@ -162,8 +157,7 @@ function saveJSON(path, outData)
 }
 
 // Load configuration from JSON encoded config file
-function loadConfig()
-{
+function loadConfig() {
     var confPath = confPrefix+"/config.js";
     var loaded;
 
@@ -178,8 +172,7 @@ function loadConfig()
 }
 
 // Synchroneously create a directory, fail silently if it already exists
-function mkdir(path, mode)
-{
+function mkdir(path, mode) {
     try
     {
         fs.mkdirSync(path, mode);
@@ -192,8 +185,7 @@ function mkdir(path, mode)
 }
 
 // Attempts to create configuration dirs if they don't exist yet, returns true on success or false.
-function checkConfDirs()
-{
+function checkConfDirs() {
     try
     {
         mkdir(confPrefix, "777"); // Redundant? Wouldn't have started without config..
@@ -206,12 +198,11 @@ function checkConfDirs()
 }
 
 // Load data from all the files under data/
-function loadData()
-{
+function loadData() {
     var files = fs.readdirSync(confPrefix+"/data");
     data = {};
 
-    // Load each file as JSON and exit if we fail; to prevent commands losing their data by
+    // Load each file as JSON and exit if we fail; to prevent modules losing their data by
     // overwriting it with an empty data object.
     files.forEach(function (file)
     {
@@ -221,7 +212,7 @@ function loadData()
         {
             var fileBase = matches[1];
 
-            log("Loading data for command '"+fileBase+"'");
+            log("Loading data for module '"+fileBase+"'");
 
             var dataFile = loadJSON(confPrefix+"/data/"+file);
 
@@ -234,10 +225,8 @@ function loadData()
     });
 }
 
-
 // Write out data objects to files.
-function saveData()
-{
+function saveData() {
     log("Saving data");
 
     // Loop over data array, save each element to file, make sure that key has no funny
@@ -248,55 +237,83 @@ function saveData()
         if (fileData && /^[a-zA-Z0-9]+$/.test(file))
         {
             if (!saveJSON(confPrefix+"/data/"+file+".js", fileData))
-                warning("failed to save data for command: "+file);
+                warning("failed to save data for module: "+file);
         }
         else
             waning("Not saving data for "+file+" (no data or invalid format)");
     }
 }
 
-
 // Returns a handle to a data object (and creates one if needed), returns null on error.
-function getData(name)
-{
+function getData(name) {
     if (!name) return null;
 
     return (data[name] = data[name] || {});
 }
 
+// Load modules from directory
+function loadModules(clear) {
+    if (clear) {
+        modules = null;
+        moduleHooks = null;
+        delete( require.cache )
+    }
+    
+    var moduleFiles = fs.readdirSync('./modules');
+    //var moduleData = '';
+    for (fileName in moduleFiles) {
+        var moduleData = fs.readFileSync('./modules/' + moduleFiles[fileName], encoding='utf8');
+        modules.push(vm.runInThisContext(moduleData));
+    }
+    //var modData = fs.readFileSync('./modules/pig.js', encoding='utf8');
+    modules.push(vm.runInThisContext(moduleData));
+};
 
-// Initialize commands, for now, it adds entries to commandHooks
-function initCommands()
+// Initialize hooks, for now, it adds entries to moduleHooks
+function initHooks()
 {
-    commandHooks = {};
-
-    // For every command, check if it has hooks, if so, loop over its hooks and add them to
-    // commandHooks, along with CommandContext used when the hook handler function is invoked.
-    for (var cmd in commands)
+    moduleHooks = {};
+    
+    // For every module, check if it has hooks, if so, loop over its hooks and add them to
+    // moduleHooks, along with ModuleContext used when the hook handler function is invoked.
+    for (var cmd in modules)
     {
-        if (!commands[cmd].hooks) continue;
-
-        var context = new CommandContext(commands[cmd], null, cmd, null);
-
-        for (var p in commands[cmd].hooks)
-        {
-            // Add entry to array for this event, initialize array first if needed.
-            if (!commandHooks[p]) commandHooks[p] = [];
-
-            commandHooks[p].push({ context: context, handler: commands[cmd].hooks[p] });
+        if (modules[cmd].hooks) {
+            for (var p in modules[cmd].hooks)
+            {
+                // Add entry to array for this event, initialize array first if needed.
+                if (!moduleHooks[p]) moduleHooks[p] = [];
+                var context = new ModuleContext(modules[cmd], null, cmd, null);
+                moduleHooks[p].push({ context: context, handler: modules[cmd].hooks[p] });
+            }
         }
     }
-    // I can remove a command from commandHooks by iterating over a command's hooks object, then for
-    // each hook, scan commandHooks[hookEvent] to find matching handler, then remove it?
-}
+    // I can remove a module from moduleHooks by iterating over a module's hooks object, then for
+    // each hook, scan moduleHooks[hookEvent] to find matching handler, then remove it?
+};
 
+// Initialize Commands within the modules
+function initCommands() {
+    moduleCommands = new Array();
+    for (var mod in modules) {
+        if (modules[mod].commands) {
+            for (var cmd in modules[mod].commands) {
+                if (!moduleCommands[cmd]) moduleCommands[cmd] = [];
+                var context = new ModuleContext(modules[mod], null, cmd, null);
+                debug('ADDED CMD: ' + cmd + ' with code: ');
+                dump(modules[mod].commands[cmd]);
+                moduleCommands[cmd].push({context: context, handler: modules[mod].commands[cmd] });
+            }
+        }
+    }
+};
 
-// Call all registered command hooks for event 'name', passing args as arguments
-function callCommandHooks(name, args)
+// Call all registered module hooks for event 'name', passing args as arguments
+function callModuleHooks(name, args)
 {
-    for (var p in commandHooks[name])
+    for (var p in moduleHooks[name])
     {
-        var hook = commandHooks[name][p];
+        var hook = moduleHooks[name][p];
 
         try
         {
@@ -306,11 +323,11 @@ function callCommandHooks(name, args)
         catch(err)
         {
             // Add more info
-            log("Failed to execute command hooks for event "+name);
+            log("Failed to execute module hooks for event "+name);
             log(err.stack);
         }
     }
-}
+};
 
 
 // irc.Client processing ///////////////////////////////////////////////////////////////////////////
@@ -319,8 +336,7 @@ function onOutput(msg)      { logTimed(">> " + msg) }
 function onInput(msg)       { logTimed("<< "+msg) }
 function onError(code, msg) { log("An error occured: "+msg); }
 
-function onConnect(remoteAddress)
-{
+function onConnect(remoteAddress) {
     log("Connected to "+remoteAddress);
 
     connectTime = Date.now();
@@ -334,26 +350,23 @@ function onConnect(remoteAddress)
         retryCount = 0;
     }, 60000);
 
-    callCommandHooks("register", arguments);
+    callModuleHooks("register", arguments);
 }
 
-function onRegister(nickname)
-{
+function onRegister(nickname) {
     log("Registered with \""+nickname+"\"");
 
     for (var p in conf.channels)
         client.joinChannel(conf.channels[p]);
 
-    callCommandHooks("register", arguments);
+    callModuleHooks("register", arguments);
 }
 
-function onUserList(channel, names)
-{
-    callCommandHooks("userList", arguments);
+function onUserList(channel, names) {
+    callModuleHooks("userList", arguments);
 }
 
-function onUserUpdate(nickname, type, newname, channel, message)
-{
+function onUserUpdate(nickname, type, newname, channel, message) {
     if (type == "nickchange")
         log("Nick change: "+nickname+" to "+newname);
     else if (type == "join")
@@ -365,11 +378,10 @@ function onUserUpdate(nickname, type, newname, channel, message)
     else if (type == "quit")
         log("Quit: "+nickname+" quit, msg: "+message);
 
-    callCommandHooks("userUpdate", arguments);
+    callModuleHooks("userUpdate", arguments);
 }
 
-function onDisconnect(error, message)
-{
+function onDisconnect(error, message) {
     // Stop any retryResetTimer if one is active
     if (retryResetTimer)
     {
@@ -397,7 +409,7 @@ function onDisconnect(error, message)
     else
         log("Disconnected.");
 
-    callCommandHooks("disconnect", arguments);
+    callModuleHooks("disconnect", arguments);
 
     // Now is a good time to save data, even if we're going to reconnect
     saveData();
@@ -407,45 +419,45 @@ function onChannelMessage(channel, sender, message)
 {
     var pcmd;
 
-    if (pcmd = parseCommand(message))
+    if (pcmd = parseModule(message))
     {
         var origin = { name: sender.name, user: sender.user, host: sender.host, channel: channel };
         runCommand(pcmd, origin);
     }
 
-    callCommandHooks("channelMessage", arguments);
+    callModuleHooks("channelMessage", arguments);
 }
 
 function onPrivateMessage(sender, message)
 {
     var pcmd;
 
-    if (pcmd = parseCommand(message))
+    if (pcmd = parseModule(message))
     {
         var origin = { name: sender.name, user: sender.user, host: sender.host, channel: null };
         runCommand(pcmd, origin);
     }
 
-    callCommandHooks("privateMessage", arguments);
+    callModuleHooks("privateMessage", arguments);
 }
 
 
 
 
-// Command processing //////////////////////////////////////////////////////////////////////////////
+// module processing //////////////////////////////////////////////////////////////////////////////
 
-var command_regex = new RegExp("^"+getEscapedCmdPrefix()+
+var module_regex = new RegExp("^"+getEscapedCmdPrefix()+
                                "([a-z0-9]+)(?:\\s+((?:\\s*[^\\s]+)+))?\\s*$", "i");
 
-// Return a parsed command object with the properties name (string), args (array), and
-// raw_args (string) if the message passed was a valid command, else null is returned.
-function parseCommand(msg)
+// Return a parsed module object with the properties name (string), args (array), and
+// raw_args (string) if the message passed was a valid module, else null is returned.
+function parseModule(msg)
 {
     var pcmd = { name: null, args: null, rawArgs: null };
 
-    // Extract command and argstring stripped of whitespace
+    // Extract module and argstring stripped of whitespace
     //var matches = /^!([a-z0-9]+)(?:\s+((?:\s*[^\s]+)+))?\s*$/i.exec(msg);
-    var matches = command_regex.exec(msg);
+    var matches = module_regex.exec(msg);
 
     if (matches)
     {
@@ -465,13 +477,18 @@ function parseCommand(msg)
 
 
 // Invoke handler for parsed command, if there is one..
-function runCommand(pcmd, origin)
-{
-    var command = commands[pcmd.name];
+function runCommand(pcmd, origin) {
+//dump(pcmd);
+//dump(origin);
+
+    var command = moduleCommands[pcmd.name];
+debug('===================> ' + pcmd.name + ' <==============================');    
+dump(command);
+    //var command = modules[pcmd.name];
 
     if (command && command.handler)
     {
-        var ctx = new CommandContext(command, origin, pcmd.name, pcmd.rawArgs);
+        var ctx = new ModuleContext(command, origin, pcmd.name, pcmd.rawArgs);
 
         try
         {
@@ -479,41 +496,41 @@ function runCommand(pcmd, origin)
         }
         catch(err)
         {
-            log("Failed to (completely) execute command:");
+            log("Failed to (completely) execute module:");
             log(err.stack);
-            ctx.reply("Error while executing command, someone repair me :(");
+            ctx.reply("Error while executing module, someone repair me :(");
         }
     }
     else
-        log("Unknown command: "+pcmd.name);
+        log("Unknown module: "+pcmd.name);
 }
 
 
-// The context commands handlers are run in, this way command handlers don't have to pass the
+// The context modules handlers are run in, this way module handlers don't have to pass the
 // relevant data around as parameters to the utility functions, but instead they can just do things
 // like this.reply("moo"), and it will do the right thing.
-function CommandContext(command, origin, name, rawArgs)
+function ModuleContext(module, origin, name, rawArgs)
 {
-    this.command = command;
+    this.module = module;
     this.origin  = origin;
     this.name    = name;
     this.rawArgs = rawArgs;
 }
 
-// Other things that are not directly related to command input, but should be reachable
+// Other things that are not directly related to module input, but should be reachable
 // XXX: Consider putting these in the constructor? makes more sense, even if it means I have a bunch
-// more assignments every time a command is invoked.
-CommandContext.prototype.version     = version;
-CommandContext.prototype.getData     = getData;
-CommandContext.prototype.saveData    = saveData;
-CommandContext.prototype.client      = client;
-CommandContext.prototype.conf        = conf;
-CommandContext.prototype.commands    = commands;
-CommandContext.prototype.data        = data;
+// more assignments every time a module is invoked.
+ModuleContext.prototype.version     = version;
+ModuleContext.prototype.getData     = getData;
+ModuleContext.prototype.saveData    = saveData;
+ModuleContext.prototype.client      = client;
+ModuleContext.prototype.conf        = conf;
+ModuleContext.prototype.modules    = modules;
+ModuleContext.prototype.data        = data;
 
 
-// Write log message for command
-CommandContext.prototype.log = function (message)
+// Write log message for module
+ModuleContext.prototype.log = function (message)
 {
     log(this.name+": "+message);
 }
@@ -521,7 +538,7 @@ CommandContext.prototype.log = function (message)
 
 // Add given piglevel to sender of message to punish for incorrect usage. If amount2 is given as
 // well, a random number between amount and amount2 will be picked.
-CommandContext.prototype.punish = function (reason, amount, amount2)
+ModuleContext.prototype.punish = function (reason, amount, amount2)
 {
     if (this.origin.name)
     {
@@ -544,7 +561,7 @@ CommandContext.prototype.punish = function (reason, amount, amount2)
 
 
 // Sends message to either channel or nickname depending on origin
-CommandContext.prototype.reply = function (message)
+ModuleContext.prototype.reply = function (message)
 {
     if (this.origin.channel)
         client.sendToChannel(this.origin.channel, message);
@@ -556,7 +573,7 @@ CommandContext.prototype.reply = function (message)
 
 
 // Sends message to sender privately even it it originated on a channel
-CommandContext.prototype.replyPrivately = function (message)
+ModuleContext.prototype.replyPrivately = function (message)
 {
     if (this.origin.name)
         client.sendToNickname(this.origin.name, message);
@@ -566,7 +583,7 @@ CommandContext.prototype.replyPrivately = function (message)
 
 
 // Returns true of origin is trusted
-CommandContext.prototype.isFromTrusted = function ()
+ModuleContext.prototype.isFromTrusted = function ()
 {
     var match = false;
     var fromHost = this.origin.host;
@@ -584,10 +601,41 @@ CommandContext.prototype.isFromTrusted = function ()
 }
 
 // Return object with timestamps for when we started up, and when we most recently connected.
-// XXX: There must be a nicer way to expose these to commands..
-CommandContext.prototype.getTimes = function ()
+// XXX: There must be a nicer way to expose these to modules..
+ModuleContext.prototype.getTimes = function ()
 {
     return { connectTime: connectTime, startTime: startTime };
 }
 
+// Reload the modules
+ModuleContext.prototype.reloadModules = function() {
 
+    loadModules();
+    initModules();
+    debug("Modules reloaded!");
+}
+
+function dump(arr,level) {
+	var dumped_text = "";
+	if(!level) level = 0;
+	
+	//The padding given at the beginning of the line.
+	var level_padding = "";
+	for(var j=0;j<level+1;j++) level_padding += "    ";
+	
+	if(typeof(arr) == 'object') { //Array/Hashes/Objects 
+		for(var item in arr) {
+			var value = arr[item];
+			
+			if(typeof(value) == 'object') { //If it is an array,
+				dumped_text += level_padding + "'" + item + "' ...\n";
+				dumped_text += dump(value,level+1);
+			} else {
+				dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+			}
+		}
+	} else { //Stings/Chars/Numbers etc.
+		dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+	}
+	debug(dumped_text);
+}
