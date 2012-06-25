@@ -3,6 +3,7 @@ var util   = require("util");
 var common = require("./common.js");
 
 var getFriendlyTime = common.getFriendlyTime;
+var get             = common.get;
 
 var commands = module.exports = {};
 
@@ -15,7 +16,7 @@ commands["wipemsg"] =
         var recipient = this.client.lowerCase(this.origin.name);
         var data = this.getData("messages");
 
-        if (data[recipient])
+        if (get(data, recipient))
         {
             this.reply("deleted "+data[recipient].length+" messages");
             data[recipient] = undefined;
@@ -43,10 +44,10 @@ commands["leavemsg"] =
     // a temporary object, doesnt need to be stored persistently.
     sendMessages: function (nickname, data)
     {
-        var messages = data && data[this.client.lowerCase(nickname)];
+        var messages = data && get(data, this.client.lowerCase(nickname));
 
         // Make sure we don't spam messages more than once ever 60 seconds
-        var lastTime = this.command.spamTimestamps[nickname];
+        var lastTime = get(this.command.spamTimestamps, nickname);
 
         if (lastTime && (Date.now()-lastTime) < 60000)
             return;
@@ -127,7 +128,8 @@ commands["leavemsg"] =
 
             if (sender && recipient && message)
             {
-                data[recipient] = data[recipient] || []; // Initialize messages array if needed
+                data[recipient] = get(data, recipient) || []; // Initialize messages array if needed
+
                 if (data[recipient].length < 3)
                 {
                     data[recipient].push({ sender: sender, senderHost: host, message: message,
@@ -364,8 +366,8 @@ commands["seen"] =
             }
             else
             {
-                var channels    = data.channels     || (data.channels     = {});
-                var channelData = channels[channel] || (channels[channel] = {});
+                var channels    = data.channels          || (data.channels     = {});
+                var channelData = get(channels, channel) || (channels[channel] = {});
 
                 channelData[this.client.lowerCase(name)] =
                 {
@@ -380,7 +382,7 @@ commands["seen"] =
             if (!data || !names) return;
 
             var channels = data.channels || (data.channels = {});
-            var channelData = channels[channel] || (channels[channel] = {});
+            var channelData = get(channels, channel) || (channels[channel] = {});
             var time = Date.now();
 
             for (var n in names)
@@ -414,7 +416,7 @@ commands["seen"] =
             {
                 // If there is a record for this nick, store it in res if it is more recent than
                 // whatever is in res currently.
-                if (channels[c][lcName])
+                if (get(channels[c], lcName))
                 {
                     if (!res || res.time < channels[c][lcName])
                     {
@@ -425,7 +427,7 @@ commands["seen"] =
             }
         }
         // Also check global records
-        if (global[lcName])
+        if (get(global, lcName))
         {
             if (!res || res.time < global[lcName].time)
                 res = global[lcName];
@@ -503,7 +505,7 @@ commands["showpig"] =
 
         var lcName = this.client.lowerCase(name);
 
-        if (data[lcName])
+        if (get(data, lcName))
             this.reply("level of pig for "+ name + " is " + data[lcName]);
         else
             this.reply("hrm.. "+name+" hasn't pigged yet!");
@@ -522,7 +524,7 @@ commands["pig"] =
         {
             var data = this.getData("pig");
             var lcName = this.client.lowerCase(name);
-            data[lcName] = (data[lcName] || 0) + 1;
+            data[lcName] = (get(data, lcName) || 0) + 1;
             this.reply("level of pig for "+ name + " has increased to "+data[lcName]);
         }
     }
@@ -539,7 +541,7 @@ commands["help"] =
 
         name = name && name.toLowerCase();
 
-        if (name && (cmd = this.commands[name]))
+        if (name && (cmd = get(this.commands, name)))
         {
             if (cmd.params && cmd.description)
                 this.replyPrivately(name+" "+cmd.params+": "+cmd.description);

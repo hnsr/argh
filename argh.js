@@ -261,7 +261,7 @@ function getData(name)
 {
     if (!name) return null;
 
-    return (data[name] = data[name] || {});
+    return (data[name] = common.get(data, name) || {});
 }
 
 
@@ -281,7 +281,7 @@ function initCommands()
         for (var p in commands[cmd].hooks)
         {
             // Add entry to array for this event, initialize array first if needed.
-            if (!commandHooks[p]) commandHooks[p] = [];
+            if (!common.get(commandHooks, p)) commandHooks[p] = [];
 
             commandHooks[p].push({ context: context, handler: commands[cmd].hooks[p] });
         }
@@ -467,7 +467,7 @@ function parseCommand(msg)
 // Invoke handler for parsed command, if there is one..
 function runCommand(pcmd, origin)
 {
-    var command = commands[pcmd.name];
+    var command = common.get(commands, pcmd.name);
 
     if (command && command.handler)
     {

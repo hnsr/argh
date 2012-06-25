@@ -1,4 +1,14 @@
 
+
+// Returns value of obj[prop] if prop exists on obj itself, else undefined.
+function get(obj, prop)
+{
+    if (Object.prototype.hasOwnProperty.call(obj, prop))
+        return obj[prop];
+
+    return undefined;
+}
+
 // Return friendly time string representing time passed since given timeMS, "2 days ago",
 // "5 hours ago", "60 seconds ago" etc
 function getFriendlyTime (timeMS, postfix)
@@ -295,6 +305,7 @@ var vsprintf = function(fmt, argv) {
 };
 
 
+exports.get                 = get;
 exports.getFriendlyTime     = getFriendlyTime;
 exports.getTimestampStr     = getTimestampStr;
 exports.getTop              = getTop;
