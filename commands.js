@@ -653,19 +653,19 @@ commands["joinchan"] =
 
 commands["pick"] =
 {
-	description: "randomly pick an item out of a list of items (separated with commas)",
-	handler: function ()
-	{
-		if (this.rawArgs)
+    description: "randomly pick an item out of a list of items (separated with commas)",
+    handler: function ()
+    {
+        if (this.rawArgs)
         {
-        	var split = this.rawArgs.trim().split(',');
+            var split = this.rawArgs.trim().split(',');
 
-        	if (split && split.length)
+            if (split && split.length)
             {
-            	// Generate random index from 0 to length-1
-            	var picked = split[Math.floor(split.length * Math.random())];
+                // Generate random index from 0 to length-1
+                var picked = split[Math.floor(split.length * Math.random())];
 
-            	this.reply("i picked \'"+picked.trim()+"\'!");
+                this.reply("i picked \'"+picked.trim()+"\'!");
             }
         }
     }
@@ -837,18 +837,22 @@ commands["md5"] =
     }
 };
 
-// Code for kick handling
-commands["autorejoin"] = {
-	description: "Kick handling",
-	hooks: {
-		userUpdate: function (nickname, type, newName, channel, message) {
-			if (type == "kick") {
-				if ( nickname == this.client.nickname) {
-					this.log("Got kicked by " + newName + " from channel " + channel);
-					// Trying to rejoining channel
-					this.client.joinChannel(channel);
-				}
-			}
+commands["autorejoin"] =
+{
+    description: "this is a module for automatically rejoining after a kick (not a command)",
+    hooks:
+    {
+        userUpdate: function (nickname, type, newName, channel, message)
+        {
+            if (type == "kick")
+            {
+                if (nickname == this.client.nickname)
+                {
+                    this.log("Got kicked by " + newName + " from channel " + channel);
+                    // Trying to rejoining channel
+                    this.client.joinChannel(channel);
+                }
+            }
         }
-	}
+    }
 };

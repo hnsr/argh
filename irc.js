@@ -169,8 +169,8 @@ Client.prototype.send = function ()
     // like truncating argumantes, if appropiate
     if (msg.length > 510)
     {
-    	warning("rejected message for being too long (>510): "+msg);
-    	return;
+        warning("rejected message for being too long (>510): "+msg);
+        return;
     }
 
     var delay;
@@ -248,7 +248,7 @@ Client.prototype.connect = function (host, port)
 
     if (self.state != "disconnected")
     {
-	// might want to disconnect here first and then reconnect? (MN: 2012-03-08)
+    // might want to disconnect here first and then reconnect? (MN: 2012-03-08)
         warning("can't connect when already connected");
         return;
     }
@@ -445,11 +445,11 @@ Client.prototype.lowerCase = function (str)
 
     if (this._support.CASEMAPPING == "ascii")
     {
-    	return lowered;
+        return lowered;
     }
     else if (this._support.CASEMAPPING == "strict-rfc1459")
     {
-    	// Strict interpretation of rfc1459, which forgot to mention ~ and ^
+        // Strict interpretation of rfc1459, which forgot to mention ~ and ^
         var rep = { "[":"{",  "]":"}",  "\\":"|" };
         lowered = lowered.replace(/[\[\]\\]/g, function (match) { return rep[match] } );
     }
@@ -646,7 +646,7 @@ handlers[codes.RPL_WELCOME] = function (msg)
 
 handlers[codes.RPL_ISUPPORT] = function (msg)
 {
-	var matches;
+    var matches;
     // See http://www.irc.org/tech_docs/005.html
 
     // Parse just the things I need, could make this more generic if I ever need to parse more than
@@ -665,14 +665,16 @@ handlers[codes.ERR_NICKNAMEINUSE] = function (msg)
 }
 
 // Handle banned from channel error
-handlers[codes.ERR_BANNEDFROMCHAN] = function(msg) {
-	// Adding timer to try to join channel every minute
-	var thisRef = this;
-	retryTimer = setTimeout(function () {
-            retryTimer = null;
-			thisRef.joinChannel(msg.args[1]);
-        },
-        60000);
+handlers[codes.ERR_BANNEDFROMCHAN] = function(msg)
+{
+    // Adding timer to try to join channel every minute
+    var thisRef = this;
+    retryTimer = setTimeout(function ()
+    {
+        retryTimer = null;
+        thisRef.joinChannel(msg.args[1]);
+    },
+    60000);
 }
 
 
