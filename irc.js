@@ -669,12 +669,8 @@ handlers[codes.ERR_BANNEDFROMCHAN] = function(msg)
 {
     // Adding timer to try to join channel every minute
     var thisRef = this;
-    retryTimer = setTimeout(function ()
-    {
-        retryTimer = null;
-        thisRef.joinChannel(msg.args[1]);
-    },
-    60000);
+
+    setTimeout(function () { thisRef.joinChannel(msg.args[1]) }, 60000);
 }
 
 
