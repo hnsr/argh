@@ -846,9 +846,9 @@ commands["autorejoin"] =
         {
             if (type == "kick")
             {
-                if (nickname == this.client.nickname)
+                if (this.client.compareName(nickname, this.client.nickname))
                 {
-                    this.log("Got kicked by " + newName + " from channel " + channel);
+                    this.log("got kicked by " + newName + " from channel " + channel);
                     // Trying to rejoining channel
                     this.client.joinChannel(channel);
                 }
