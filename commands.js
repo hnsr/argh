@@ -173,7 +173,12 @@ commands["youtube"] =
                     var result = JSON.parse(dataJSON);
 
                     if (doSearch)
-                        result = result.feed.entry[0];
+                    {
+                        if (result.feed && result.feed.entry)
+                            result = result.feed.entry[0];
+                        else
+                            result = null;
+                    }
                     else
                         result = result.entry;
 
@@ -226,6 +231,9 @@ commands["youtube"] =
                 if (entry)
                     self.reply("http://youtube.com/watch?v="+entry.media$group.yt$videoid.$t+
                                " - "+entry.title.$t);
+                else
+                    self.reply("no results for \""+self.rawArgs+"\"");
+
             }
         }
     }
