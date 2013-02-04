@@ -468,15 +468,6 @@ commands["seen"] =
 };
 
 
-commands["coffee"] =
-{
-    description: "coffee!",
-    handler: function ()
-    {
-        this.punish("tried to steal my coffee", -100, 100);
-    }
-};
-
 commands["pigs"] =
 {
     description: "show biggest piggers",
@@ -861,6 +852,132 @@ commands["autorejoin"] =
                     this.client.joinChannel(channel);
                 }
             }
+        }
+    }
+};
+
+commands["addquote"] =
+{
+    description: "add a quote",
+    params: "<string>",
+    handler: function ()
+    {
+        if (!this.rawArgs)
+        {
+            this.reply("no.");
+            return;
+        }
+
+        var data = this.getData("quotes");
+        var quotes = data.quotes || (data.quotes = []);
+        var quote = this.rawArgs.replace(/^\s+|\s+$/g, '')
+
+        if (quote.length)
+        {
+            quotes.push(quote);
+            this.reply("added quote \""+quote+"\"");
+        }
+    }
+};
+
+commands["quote"] =
+{
+    description: "print a random quote",
+    handler: function ()
+    {
+        var data = this.getData("quotes");
+
+        var quotes = data.quotes || (data.quotes = []);
+
+        if (quotes.length)
+        {
+            var randomQuote = quotes[Math.floor(quotes.length * Math.random())];
+
+            this.reply("quote: "+randomQuote);
+        }
+    }
+};
+
+commands["addtea"] =
+{
+    description: "add something to the tea menu",
+    params: "<string>",
+    handler: function ()
+    {
+        if (!this.rawArgs)
+        {
+            this.reply("no.");
+            return;
+        }
+
+        var tea = this.getData("tea");
+        var items = tea.items || (tea.items = []);
+        var item = this.rawArgs.replace(/^\s+|\s+$/g, '')
+
+        if (item.length)
+        {
+            items.push(item);
+            this.reply("added \""+item+"\" to the tea menu");
+        }
+    }
+};
+
+commands["tea"] =
+{
+    description: "tea",
+    handler: function ()
+    {
+        var tea = this.getData("tea");
+
+        var items = tea.items || (tea.items = []);
+
+        if (items.length)
+        {
+            var randomItem = items[Math.floor(items.length * Math.random())];
+
+            this.reply("\001ACTION serves "+this.origin.name+" "+randomItem+"\001");
+        }
+    }
+};
+
+commands["addcoffee"] =
+{
+    description: "add something to the coffee menu",
+    params: "<string>",
+    handler: function ()
+    {
+        if (!this.rawArgs)
+        {
+            this.reply("no.");
+            return;
+        }
+
+        var coffee = this.getData("coffee");
+        var items = coffee.items || (coffee.items = []);
+        var item = this.rawArgs.replace(/^\s+|\s+$/g, '')
+
+        if (item.length)
+        {
+            items.push(item);
+            this.reply("added \""+item+"\" to the coffee menu");
+        }
+    }
+};
+
+commands["coffee"] =
+{
+    description: "coffee!",
+    handler: function ()
+    {
+        var coffee = this.getData("coffee");
+
+        var items = coffee.items || (coffee.items = []);
+
+        if (items.length)
+        {
+            var randomItem = items[Math.floor(items.length * Math.random())];
+
+            this.reply("\001ACTION serves "+this.origin.name+" "+randomItem+"\001");
         }
     }
 };
