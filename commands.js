@@ -882,7 +882,8 @@ commands["addquote"] =
 
 commands["quote"] =
 {
-    description: "print a random quote",
+    description: "print a random quote, or one that contains the given string",
+    params: "<string>",
     handler: function ()
     {
         var data = this.getData("quotes");
@@ -891,9 +892,25 @@ commands["quote"] =
 
         if (quotes.length)
         {
-            var randomQuote = quotes[Math.floor(quotes.length * Math.random())];
+            if (this.rawArgs)
+            {
+                this.rawArgs = this.rawArgs.toLowerCase();
 
-            this.reply("quote: "+randomQuote);
+                for (var q in quotes)
+                {
+                    if (quotes[q].toLowerCase().indexOf(this.rawArgs) >= 0)
+                    {
+                        this.reply("quote: "+quotes[q]);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                var randomQuote = quotes[Math.floor(quotes.length * Math.random())];
+
+                this.reply("quote: "+randomQuote);
+            }
         }
     }
 };
