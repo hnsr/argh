@@ -895,15 +895,22 @@ commands["quote"] =
         {
             if (this.rawArgs)
             {
+                // Build list of matches, then randomly pick one from it
+                var matches = [];
+
                 this.rawArgs = this.rawArgs.toLowerCase();
 
                 for (var q in quotes)
                 {
                     if (quotes[q].toLowerCase().indexOf(this.rawArgs) >= 0)
                     {
-                        this.reply("quote: "+quotes[q]);
-                        break;
+                        matches.push(quotes[q]);
                     }
+                }
+
+                if (matches.length)
+                {
+                    this.reply("quote: "+getRandom(matches));
                 }
             }
             else
