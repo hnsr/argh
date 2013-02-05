@@ -81,6 +81,18 @@ function getTop(count, obj, compareFunc)
 }
 
 
+// Return a random item from an array
+function getRandom(arr)
+{
+    if (arr instanceof Array && arr.length)
+    {
+        return arr[Math.floor(arr.length*Math.random())];
+    }
+
+    return null;
+}
+
+
 // Run code in an isolated child process with timeout. Timeout is ignored when not a positive
 // number. exitFunc is called when the code has been succesfully executed and is passed the result
 // as first parameter, and a string representation of the value as second paramter (using
@@ -309,6 +321,7 @@ exports.get                 = get;
 exports.getFriendlyTime     = getFriendlyTime;
 exports.getTimestampStr     = getTimestampStr;
 exports.getTop              = getTop;
+exports.getRandom           = getRandom;
 exports.runCode             = runCode;
 exports.sprintf             = sprintf;
 exports.vsprintf            = vsprintf;

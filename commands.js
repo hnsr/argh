@@ -2,8 +2,9 @@ var vm     = require("vm");
 var util   = require("util");
 var common = require("./common.js");
 
-var getFriendlyTime = common.getFriendlyTime;
 var get             = common.get;
+var getRandom       = common.getRandom;
+var getFriendlyTime = common.getFriendlyTime;
 
 var commands = module.exports = {};
 
@@ -662,7 +663,7 @@ commands["pick"] =
             if (split && split.length)
             {
                 // Generate random index from 0 to length-1
-                var picked = split[Math.floor(split.length * Math.random())];
+                var picked = getRandom(split);
 
                 this.reply("i picked \'"+picked.trim()+"\'!");
             }
@@ -907,9 +908,7 @@ commands["quote"] =
             }
             else
             {
-                var randomQuote = quotes[Math.floor(quotes.length * Math.random())];
-
-                this.reply("quote: "+randomQuote);
+                this.reply("quote: "+getRandom(quotes));
             }
         }
     }
@@ -950,9 +949,7 @@ commands["tea"] =
 
         if (items.length)
         {
-            var randomItem = items[Math.floor(items.length * Math.random())];
-
-            this.reply("\001ACTION serves "+this.origin.name+" "+randomItem+"\001");
+            this.reply("\001ACTION serves "+this.origin.name+" "+getRandom(items)+"\001");
         }
     }
 };
@@ -992,9 +989,7 @@ commands["coffee"] =
 
         if (items.length)
         {
-            var randomItem = items[Math.floor(items.length * Math.random())];
-
-            this.reply("\001ACTION serves "+this.origin.name+" "+randomItem+"\001");
+            this.reply("\001ACTION serves "+this.origin.name+" "+getRandom(items)+"\001");
         }
     }
 };
