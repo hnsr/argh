@@ -8,6 +8,9 @@ var getFriendlyTime = common.getFriendlyTime;
 
 var commands = module.exports = {};
 
+var isPunctuated=function(s){
+    return /^.*[^\.!?\s][\.!?]$/.test(s);
+};
 
 commands["wipemsg"] =
 {
@@ -929,7 +932,7 @@ commands["addtea"] =
     {
         if (!this.rawArgs)
         {
-            this.reply("no.");
+            this.reply("No!");
             return;
         }
 
@@ -939,8 +942,15 @@ commands["addtea"] =
 
         if (item.length)
         {
-            items.push(item);
-            this.reply("added \""+item+"\" to the tea menu");
+            if(isPunctuated(item))
+            {
+                items.push(item);
+                this.reply("Added \""+item+"\" to the tea menu.");  
+            }
+            else 
+            {
+                this.reply("Item is not in accordance with standing punctuation guidelines. Tea refused.");
+            }
         }
     }
 };
@@ -969,7 +979,7 @@ commands["addcoffee"] =
     {
         if (!this.rawArgs)
         {
-            this.reply("no.");
+            this.reply("No!");
             return;
         }
 
@@ -979,8 +989,15 @@ commands["addcoffee"] =
 
         if (item.length)
         {
-            items.push(item);
-            this.reply("added \""+item+"\" to the coffee menu");
+            if(isPunctuated(item))
+            {
+                items.push(item);
+                this.reply("Added \""+item+"\" to the coffee menu.");  
+            }
+            else 
+            {
+                this.reply("Item is not in accordance with standing punctuation guidelines. Coffee refused.");
+            }
         }
     }
 };
