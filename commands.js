@@ -1017,3 +1017,61 @@ commands["coffee"] =
         }
     }
 };
+
+commands["oink"] =
+{
+    description: "Finds some oink in the internets",
+    handler: function (query)
+    {
+        function chooseOne(array){
+            return array[Math.floor(Math.random()*array.length)];
+        }
+    
+        var http = require("http");
+        var self = this;
+        
+        var term=chooseOne(["pig","hog","boar","oink"]);
+        var color=chooseOne(["black","blue","brown","gray","green","orange","pink","purple","red","teal","white","yellow"]);
+        var start=Math.floor(Math.random()*50);
+
+        var path="/ajax/services/search/images?v=1.0&rsz=5&q="+term+"&start="+start;
+        if(Math.random()>0.3) path+="&imgcolor="+color;
+
+        // More info: http://code.google.com/apis/imagesearch/v1/jsondevguide.html
+        var options =
+        {
+            host: "ajax.googleapis.com",
+            path: path
+        };
+
+        http.get(options, function (res)
+        {
+            var dataJSON = "";
+
+            res.on("data", function (data)
+            {
+                dataJSON += data;
+            });
+            res.on("end", function ()
+            {
+                try
+                {
+                    var results = JSON.parse(dataJSON);
+
+                    if (results.responseData.results.length > 0){
+                        var images=results.responseData.results;
+                        var image=images[Math.floor(Math.random()*images.length)];
+                        self.reply("Oink! "+image.unescapedUrl);
+                    }
+                    else
+                        self.reply("no oink for you");
+                }
+                catch (e)
+                {
+                    self.reply("no oink for you!");
+                }
+            });
+        });
+    }
+};
+
