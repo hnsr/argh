@@ -337,7 +337,8 @@ commands["image"] =
                 }
                 catch (e)
                 {
-                    self.reply("failed to parse google JSON response, FIXME");
+                    self.reply("no.");
+                    self.log("bad JSON response: "+dataJSON);
                 }
             });
         });
