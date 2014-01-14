@@ -1131,3 +1131,110 @@ commands["girrroink"] =
     }
 };
 
+commands["define"] =
+{
+    description: "Defines a word",
+    handler: function (query)
+    {
+        if(!this.rawArgs || !(query=this.rawArgs.trim())) {
+            this.reply("No.");
+            return;
+        }
+        
+    
+        var path="/dictionary/json?callback=a&sl=en&tl=en&q="+encodeURIComponent(query)
+
+        var options =
+        {
+            host: "www.google.com",
+            path: path
+        };
+
+        var http = require("http");
+        var self = this;
+        
+        http.get(options, function (res)
+        {
+            var dataJSON = "";
+
+            res.on("data", function (data)
+            {
+                dataJSON += data;
+            });
+            res.on("end", function ()
+            {
+                var ind1=dataJSON.indexOf("{");
+                var ind2=dataJSON.lastIndexOf("}");
+                if(ind1<0 || ind2<0) {
+                    self.reply("I don't feel like doing that, maybe later.");
+                    debug("Got an unexpected reply to define: "+dataJSON);
+                }
+                else {
+                    dataJSON=dataJSON.substring(ind1,ind2+1);
+                    dataJSON=dataJSON.replace(/\\x/g,"\\u00"); // google sends escapes \xHH which JSON.parse doesn't like, it wants \u00HH
+                    try
+                    {
+                        var res=[];
+                        var totalResults=0;
+                        
+                        var results = JSON.parse(dataJSON);
+                        if(results["primaries"]) {
+                            for(var i=0;i<results["primaries"].length;i++){
+                                var res2=[];
+                                var primary=results["primaries"][i];
+                                if(primary["type"]!="headword") continue;
+                                if(!primary["terms"]) continue;
+                                var type=null;
+                                for(var j=0;j<primary["terms"].length;j++){
+                                    var term=primary["terms"][j];
+                                    if(!term["type"]=="text") continue;
+                                    type=term["labels"][0]["text"];
+                                    break;
+                                }
+                                if(type==null) continue;
+                                
+                                for(j=0;j<primary["entries"].length;j++){
+                                    var entry=primary["entries"][j];
+                                    if(entry["type"]!="meaning") continue;
+                                    
+                                    var meaning=entry["terms"][0]["text"];
+                                    if(meaning){
+                                        meaning=meaning.replace(/<(\/?)([a-z]+)>/g,""); // google sends some html tags, strip those                                
+                                        totalResults++;
+                                        res2.push(type+". "+meaning);
+                                    }
+                                }
+                                if(res2.length>0) res.push(res2);
+                            }
+                        }
+                        
+                        if(totalResults>0){
+                            self.reply("Results for \""+query+"\":");
+                            
+                            var maxRes=8;
+                            var printed=0;
+                            
+                            for(i=0;i<res.length && printed<maxRes;i++){
+                                for(j=0;    j<res[i].length
+                                            && printed<maxRes
+                                            && (j==0 || printed+1+res.length-1-i<=maxRes);    j++){
+                                    printed++;
+                                    self.reply(printed+". "+res[i][j]);
+                                }
+                            }
+                            
+                            if(printed<totalResults) self.reply((totalResults-printed)+" more...");
+                        }
+                        else self.reply("\""+query+"\" is undefined.");
+                    }
+                    catch (e)
+                    {
+                        self.reply("I don't feel like doing that, maybe later!");
+                    }
+                }
+                
+            });
+        });
+    }
+};
+
