@@ -261,9 +261,17 @@ Client.prototype.connect = function (host, port)
 
     sock.on("connect", function ()
     {
+        self.localAddress  = this.localAddress;
+        self.localPort     = this.localPort;
         self.remoteAddress = this.remoteAddress;
+        self.remotePort    = this.remotePort;
         self.state = "connected";
-        self.emit("connect", this.remoteAddress);
+        self.emit("connect",
+            this.remoteAddress,
+            this.remotePort,
+            this.localAddress,
+            this.localPort
+        );
         self._register();
     });
 

@@ -319,9 +319,9 @@ function onOutput(msg)      { logTimed(">> " + msg) }
 function onInput(msg)       { logTimed("<< "+msg) }
 function onError(code, msg) { log("An error occured: "+msg); }
 
-function onConnect(remoteAddress)
+function onConnect(remoteAddress, remotePort, localAddress, localPort)
 {
-    log("Connected to "+remoteAddress);
+    log("Connected to "+remoteAddress+":"+remotePort+" (from "+localAddress+":"+localPort+")");
 
     connectTime = Date.now();
 
