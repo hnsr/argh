@@ -61,9 +61,17 @@ client.on("privateMessage", onPrivateMessage);
 client.on("error",          onError);
 client.on("disconnect",     onDisconnect);
 
-log("Connecting to "+conf.host+":"+conf.port+"...");
 
-client.connect(conf.host, conf.port);
+if (conf.local_address)
+{
+    log("Connecting to "+conf.host+":"+conf.port+" (from "+conf.local_address+")...");
+    client.connect(conf.host, conf.port, conf.local_address);
+}
+else
+{
+    log("Connecting to "+conf.host+":"+conf.port+"...");
+    client.connect(conf.host, conf.port);
+}
 
 // Setup a command prompt that can be used to give commands, and in emergencies can also eval code
 // in this file's local scope to fix things on the fly:
@@ -388,7 +396,11 @@ function onDisconnect(error, message)
         retryTimer = setTimeout(function ()
         {
             retryTimer = null;
-            client.connect(conf.host, conf.port);
+
+            if (conf.local_address)
+                client.connect(conf.host, conf.port, conf.local_address);
+            else
+                client.connect(conf.host, conf.port);
         },
         timeWait*1000);
 

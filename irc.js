@@ -242,18 +242,25 @@ Client.prototype._register = function ()
 // exception of disconnect(), which can be called immediately after the connect event is fired.)
 // If either connecting fails, or registering fails, an error event will be fired, followed by the
 // disconnect event.
-Client.prototype.connect = function (host, port)
+Client.prototype.connect = function (host, port, localAddress)
 {
     var self = this;
 
     if (self.state != "disconnected")
     {
-    // might want to disconnect here first and then reconnect? (MN: 2012-03-08)
         warning("can't connect when already connected");
         return;
     }
 
-    var sock = new net.createConnection(port ? port : 6667, host);
+    var connectOptions = {};
+    connectOptions.host = host;
+    connectOptions.port = port ? port : 6667;
+
+    if (localAddress)
+        connectOptions.localAddress = localAddress;
+
+    //var sock = new net.createConnection(port ? port : 6667, host);
+    var sock = new net.createConnection(connectOptions);
 
     self._sock = sock;
 
