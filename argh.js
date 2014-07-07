@@ -41,8 +41,8 @@ loadConfig();
 
 client = new irc.Client(
 {
-    burstCount: conf.burstCount,
-    burstPeriod: conf.burstPeriod,
+    burstCount: conf.burst_count,
+    burstPeriod: conf.burst_period,
     password: conf.password,
     nicks: conf.nicks
 });

@@ -18,8 +18,8 @@ running and how it can be extended:
           "myhostname.example.com",
           "myreggednick.users.quakenet.org"
       ],
-      "burstCount":  2,
-      "burstPeriod": 3000
+      "burst_count":  2,
+      "burst_period": 3000
     }
 
   (trusted_hosts is an array with hostnames that are allowed to run 'trusted' commands. the

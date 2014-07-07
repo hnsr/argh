@@ -590,7 +590,7 @@ commands["eval"] =
     handler: function ()
     {
         var self = this;
-        var timeout = this.conf.evalTimeout;
+        var timeout = this.conf.eval_timeout;
 
         common.runCode(self.rawArgs, (timeout ? timeout : 10000), onExit, onError);
 
