@@ -23,8 +23,8 @@ running and how it can be extended:
     }
 
   (trusted_hosts is an array with hostnames that are allowed to run 'trusted' commands. the
-  burstCount/burstPeriod are for throttling messages, in this case at most 2 messages per 3 seconds
-  are allowed)
+  burst_count/burst_period are for throttling messages, in this case at most 2 messages per 3
+  seconds are allowed)
 
   An evil irc server/oper could trick argh into doing evil stuff if it changes its hostname into one
   of the trusted hosts since it could then run trusted commands (like maybe .addcommand if/once I
